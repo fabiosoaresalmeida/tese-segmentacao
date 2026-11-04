@@ -1,0 +1,30 @@
+AVALIACAO DOS MODELOS - total das ortos de teste, referencias na posicao original
+Data: 2026-10-24 21:15
+
+REFERENCIA: edicao  (D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\a_constr_Limpa.shp)
+grupo           modelo                                     UA     PA      OA  kappa   F1px   F1pg |      P     R  F1obj   cob  fus   IoU  erroA%  desl  dcont
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+faseA_4bandas   unet_resnet152_b8_20261024_050812       0.793  0.766  0.9901  0.774  0.779  0.776 |  0.616 0.547  0.580 0.799  232 0.669    -2.1  1.85   1.22
+faseA_4bandas   unet_resnet50_b8_20261022_112403        0.802  0.749  0.9901  0.770  0.775  0.772 |  0.611 0.540  0.574 0.782  216 0.668    -4.3  1.89   1.23
+faseA_4bandas   unet_resnet101_b8_20261023_002415       0.799  0.755  0.9901  0.771  0.776  0.773 |  0.601 0.534  0.566 0.784  219 0.665    -3.4  1.96   1.25
+faseA_4bandas   unet_resnet34_b8_20261021_143934        0.799  0.743  0.9899  0.765  0.770  0.767 |  0.603 0.523  0.560 0.769  233 0.664    -4.0  1.94   1.26
+faseA_4bandas   deeplab_resnet101_b8_20261021_231023    0.785  0.737  0.9894  0.755  0.761  0.756 |  0.617 0.478  0.539 0.739  279 0.657     0.6  1.98   1.37
+faseA_4bandas   deeplab_resnet50_b8_20261021_184251     0.806  0.742  0.9900  0.767  0.773  0.768 |  0.600 0.481  0.534 0.746  237 0.654    -5.4  2.00   1.34
+faseA_4bandas   deeplab_resnet34_b8_20261021_105825     0.796  0.728  0.9895  0.755  0.760  0.756 |  0.576 0.461  0.512 0.726  232 0.650    -5.0  2.06   1.40
+faseA_4bandas   samlora_vit_l_b8_20261023_134009        0.732  0.776  0.9884  0.747  0.753  0.751 |  0.492 0.517  0.504 0.824  296 0.663     6.1  1.98   1.30
+faseA_4bandas   samlora_vit_b_b8_20261022_045159        0.673  0.758  0.9861  0.706  0.713  0.711 |  0.456 0.493  0.474 0.804  297 0.657     8.2  2.03   1.35
+
+REFERENCIA: fotogrametria  (D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\construcoes_fotogrametria_Limpa.shp)
+grupo           modelo                                     UA     PA      OA  kappa   F1px   F1pg |      P     R  F1obj   cob  fus   IoU  erroA%  desl  dcont
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+faseA_4bandas   unet_resnet152_b8_20261024_050812       0.793  0.766  0.9901  0.774  0.779  0.776 |  0.612 0.545  0.577 0.797  225 0.672    -2.3  1.82   1.20
+faseA_4bandas   unet_resnet50_b8_20261022_112403        0.802  0.749  0.9901  0.770  0.775  0.772 |  0.610 0.541  0.574 0.783  208 0.669    -4.4  1.86   1.22
+faseA_4bandas   unet_resnet101_b8_20261023_002415       0.798  0.755  0.9901  0.771  0.776  0.773 |  0.603 0.537  0.568 0.781  213 0.665    -3.6  1.94   1.25
+faseA_4bandas   unet_resnet34_b8_20261021_143934        0.799  0.743  0.9899  0.765  0.770  0.767 |  0.602 0.524  0.560 0.769  225 0.666    -4.2  1.92   1.25
+faseA_4bandas   deeplab_resnet101_b8_20261021_231023    0.784  0.737  0.9894  0.755  0.760  0.756 |  0.615 0.479  0.538 0.739  271 0.658     0.3  1.97   1.36
+faseA_4bandas   deeplab_resnet50_b8_20261021_184251     0.805  0.742  0.9900  0.767  0.772  0.768 |  0.596 0.480  0.532 0.745  226 0.655    -5.5  1.98   1.33
+faseA_4bandas   deeplab_resnet34_b8_20261021_105825     0.795  0.728  0.9895  0.755  0.760  0.756 |  0.576 0.463  0.513 0.724  222 0.651    -5.3  2.04   1.39
+faseA_4bandas   samlora_vit_l_b8_20261023_134009        0.732  0.776  0.9884  0.747  0.753  0.751 |  0.492 0.519  0.505 0.823  286 0.664     6.0  1.96   1.29
+faseA_4bandas   samlora_vit_b_b8_20261022_045159        0.673  0.758  0.9861  0.706  0.713  0.711 |  0.454 0.493  0.473 0.803  289 0.658     8.1  2.02   1.34
+
+UA, PA, OA, kappa, F1px: ao pixel, classificacao, classe edificio. F1pg: F1 ao pixel dos poligonos regularizados (produto final). P, R, F1obj: por objeto, poligonos regularizados (IoU >= 0.5). cob: cobertura >= 50 %. fus: fusoes. erroA%: erro de area medio. desl: deslocamento do centroide (m). dcont: distancia media entre contornos (m).

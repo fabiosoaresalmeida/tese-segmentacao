@@ -43,7 +43,7 @@ import arcpy
 # =============================== CONFIGURAÇÃO ===============================
 # --- entradas
 ORTOMOSAICO = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126_ndsm\126_nDSM_5bandas_v2.tif"
-EDIFICIOS   = r"D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\a_constr_treino.shp"   # do 60_separar_treino_teste.py
+EDIFICIOS   = r"D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\a_constr_treino.shp"   # do 06_separar_treino_teste.py
 MASCARA     = r"D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\mascara_treino.shp"    # um só polígono
 ZONA_TESTE  = r"D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\zona_teste.shp"        # só para verificação
 
@@ -51,7 +51,7 @@ ZONA_TESTE  = r"D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\zona_tes
 CAMPO_CLASSE = "code"            # campo com o valor da classe (1 = edifício)
 CRIAR_CLASSE_CONSTANTE = False   # True: ignora CAMPO_CLASSE e usa classe = 1 em todos os edifícios
 
-# --- chips (iguais aos da segunda série, para os resultados serem comparáveis)
+# --- chips (iguais nas duas fases, para os resultados serem comparáveis)
 TILE   = 256                     # px  (256 px x 0,5 m = 128 m)
 STRIDE = 128                     # px  (50 % de sobreposição)
 CELL_SIZE = 0.5                  # m; None = resolução nativa do ortomosaico
@@ -70,7 +70,7 @@ PASSO_AMOSTRA = 10               # proporção de classes: lê 1 em cada N chips
 FATOR_PARALELO = "50%"           # núcleos usados na exportação; None = predefinição
 
 # --- treino a seguir (opcional; só corre no Python Command Prompt)
-SCRIPT_TREINO = None             # por exemplo r"D:\Users\Cap_Almeida\Projeto\08_Unet.py"
+SCRIPT_TREINO = None             # por exemplo r"D:\Users\Cap_Almeida\Projeto\Python\08_treinar_modelos.py"
 # ============================================================================
 
 arcpy.env.overwriteOutput = True
@@ -124,7 +124,7 @@ def validar_entradas(rel):
         rel(f"  {nome + ':':<12} {descrever_sr(sr)}")
         if sr.name != sr_o.name:
             raise RuntimeError(f"{nome} noutro sistema de coordenadas. Projeta-o para o sistema "
-                               "do ortomosaico (por exemplo com o limpar_a_constr.py) antes de exportar.")
+                               "do ortomosaico (por exemplo com o 03_Limpar_Constr_Projt.py) antes de exportar.")
     rel("  OK: todos no sistema do ortomosaico.")
     rel()
 

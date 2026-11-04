@@ -8,6 +8,13 @@ cartografica, com que os modelos foram treinados, e o produto da fotogrametria).
 A classificacao e os poligonos de cada modelo sao feitos uma so vez; as metricas
 sao calculadas para cada referencia e guardadas com a coluna "referencia".
 
+Entradas do 06_separar_treino_teste.py (zona_teste.shp) e do
+03_Limpar_Constr_Projt.py (a_constr_Limpa.shp); modelos do 08_treinar_modelos.py
+(fase A) e do 08_treinar_modelos_nDSM.py (fase B).
+
+Os modelos sao organizados em GRUPOS, cada um com a sua pasta de modelos e o seu
+ortomosaico (por exemplo, fase A com 4 bandas e fase B com 5 bandas, com o nDSM).
+
 Os modelos sao organizados em GRUPOS, cada um com a sua pasta de modelos e o seu
 ortomosaico (por exemplo, fase A com 4 bandas e fase B com 5 bandas, com o nDSM).
 Para cada grupo:

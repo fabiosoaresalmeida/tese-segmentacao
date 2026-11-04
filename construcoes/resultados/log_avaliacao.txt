@@ -1,0 +1,98 @@
+[2026-11-02 11:21:05] ============================================================
+[2026-11-02 11:21:05] Avaliacao iniciada | modo_teste=False | grupos=['faseB_ndsm'] | referencias=['edicao', 'fotogrametria']
+[2026-11-02 11:21:06] Referencia edicao: 3415 edificios na zona de teste, 60 nas margens (a_constr_Limpa.shp)
+[2026-11-02 11:21:07] Referencia fotogrametria: 3401 edificios na zona de teste, 60 nas margens (construcoes_fotogrametria_Limpa.shp)
+[2026-11-02 11:21:07] GRUPO faseB_ndsm | modelos em D:\DL\Modelos\126_original_ndsm | ortomosaico D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126_ndsm\126_nDSM_5bandas_v2.tif
+[2026-11-02 11:21:07]    4 modelos: ['deeplab_resnet101_b8_20261029_175624', 'samlora_vit_l_b8_20261030_151830', 'unet_resnet152_b8_20261031_071215', 'unet_resnet50_b8_20261030_000624']
+[2026-11-02 11:21:08]    [faseB_ndsm] a recortar 126-I-3 com 256 m de contexto
+[2026-11-02 11:21:40]    [faseB_ndsm] 126-I-3 | edicao: 1295 edificios de referencia, 34 nas margens
+[2026-11-02 11:21:43]    [faseB_ndsm] 126-I-3 | fotogrametria: 1287 edificios de referencia, 34 nas margens
+[2026-11-02 11:21:43]    [faseB_ndsm] a recortar 126-II-3 com 256 m de contexto
+[2026-11-02 11:22:32]       bordas espelhadas: baixo 512 px
+[2026-11-02 11:22:37]    [faseB_ndsm] 126-II-3 | edicao: 1063 edificios de referencia, 14 nas margens
+[2026-11-02 11:22:39]    [faseB_ndsm] 126-II-3 | fotogrametria: 1058 edificios de referencia, 14 nas margens
+[2026-11-02 11:22:39]    [faseB_ndsm] a recortar 126-IV-1 com 256 m de contexto
+[2026-11-02 11:23:27]       bordas espelhadas: cima 512 px
+[2026-11-02 11:23:32]    [faseB_ndsm] 126-IV-1 | edicao: 1057 edificios de referencia, 12 nas margens
+[2026-11-02 11:23:35]    [faseB_ndsm] 126-IV-1 | fotogrametria: 1056 edificios de referencia, 12 nas margens
+[2026-11-02 11:23:35] MODELO faseB_ndsm | deeplab_resnet101_b8_20261029_175624 | 5 bandas
+[2026-11-02 11:27:45]    126-I-3: classificacao em 4.2 min
+[2026-11-02 11:28:34]    126-I-3 | edicao: pixel F1=0.786 | objeto F1=0.598 R=0.531 fusoes=88 IoU=0.689 dist.contorno=1.20 m
+[2026-11-02 11:29:01]    126-I-3 | fotogrametria: pixel F1=0.786 | objeto F1=0.602 R=0.537 fusoes=82 IoU=0.691 dist.contorno=1.19 m
+[2026-11-02 11:29:01]    126-I-3: concluida em 5.4 min
+[2026-11-02 11:32:11]    126-II-3: classificacao em 3.2 min
+[2026-11-02 11:33:07]    126-II-3 | edicao: pixel F1=0.789 | objeto F1=0.642 R=0.608 fusoes=27 IoU=0.682 dist.contorno=1.23 m
+[2026-11-02 11:33:38]    126-II-3 | fotogrametria: pixel F1=0.786 | objeto F1=0.636 R=0.603 fusoes=26 IoU=0.678 dist.contorno=1.25 m
+[2026-11-02 11:33:38]    126-II-3: concluida em 4.6 min
+[2026-11-02 11:36:42]    126-IV-1: classificacao em 3.1 min
+[2026-11-02 11:37:27]    126-IV-1 | edicao: pixel F1=0.750 | objeto F1=0.532 R=0.450 fusoes=56 IoU=0.665 dist.contorno=1.16 m
+[2026-11-02 11:37:53]    126-IV-1 | fotogrametria: pixel F1=0.752 | objeto F1=0.539 R=0.456 fusoes=55 IoU=0.666 dist.contorno=1.15 m
+[2026-11-02 11:37:53]    126-IV-1: concluida em 4.2 min
+[2026-11-02 11:37:53]    TOTAL deeplab_resnet101_b8_20261029_175624 | edicao: pixel F1=0.779 | objeto F1=0.593 fusoes=171 dist.contorno=1.20 m
+[2026-11-02 11:37:53]    TOTAL deeplab_resnet101_b8_20261029_175624 | fotogrametria: pixel F1=0.779 | objeto F1=0.595 fusoes=163 dist.contorno=1.20 m
+[2026-11-02 11:37:53] MODELO faseB_ndsm | samlora_vit_l_b8_20261030_151830 | 5 bandas
+[2026-11-02 11:44:17]    126-I-3: classificacao em 6.4 min
+[2026-11-02 11:45:24]    126-I-3 | edicao: pixel F1=0.755 | objeto F1=0.629 R=0.610 fusoes=118 IoU=0.711 dist.contorno=1.08 m
+[2026-11-02 11:45:59]    126-I-3 | fotogrametria: pixel F1=0.756 | objeto F1=0.633 R=0.616 fusoes=111 IoU=0.714 dist.contorno=1.07 m
+[2026-11-02 11:45:59]    126-I-3: concluida em 8.1 min
+[2026-11-02 11:52:08]    126-II-3: classificacao em 6.2 min
+[2026-11-02 11:53:11]    126-II-3 | edicao: pixel F1=0.767 | objeto F1=0.594 R=0.657 fusoes=43 IoU=0.683 dist.contorno=1.22 m
+[2026-11-02 11:53:44]    126-II-3 | fotogrametria: pixel F1=0.763 | objeto F1=0.586 R=0.649 fusoes=41 IoU=0.679 dist.contorno=1.24 m
+[2026-11-02 11:53:44]    126-II-3: concluida em 7.8 min
+[2026-11-02 12:01:32]    126-IV-1: classificacao em 7.8 min
+[2026-11-02 12:02:26]    126-IV-1 | edicao: pixel F1=0.749 | objeto F1=0.527 R=0.544 fusoes=83 IoU=0.687 dist.contorno=1.04 m
+[2026-11-02 12:02:53]    126-IV-1 | fotogrametria: pixel F1=0.752 | objeto F1=0.532 R=0.549 fusoes=83 IoU=0.690 dist.contorno=1.03 m
+[2026-11-02 12:02:53]    126-IV-1: concluida em 9.2 min
+[2026-11-02 12:02:53]    TOTAL samlora_vit_l_b8_20261030_151830 | edicao: pixel F1=0.758 | objeto F1=0.586 fusoes=244 dist.contorno=1.12 m
+[2026-11-02 12:02:53]    TOTAL samlora_vit_l_b8_20261030_151830 | fotogrametria: pixel F1=0.758 | objeto F1=0.586 fusoes=235 dist.contorno=1.11 m
+[2026-11-02 12:02:53] MODELO faseB_ndsm | unet_resnet152_b8_20261031_071215 | 5 bandas
+[2026-11-02 12:11:44]    126-I-3: classificacao em 8.8 min
+[2026-11-02 12:12:56]    126-I-3 | edicao: pixel F1=0.844 | objeto F1=0.678 R=0.645 fusoes=89 IoU=0.726 dist.contorno=0.97 m
+[2026-11-02 12:13:36]    126-I-3 | fotogrametria: pixel F1=0.845 | objeto F1=0.682 R=0.651 fusoes=82 IoU=0.728 dist.contorno=0.96 m
+[2026-11-02 12:13:36]    126-I-3: concluida em 10.7 min
+[2026-11-02 12:21:49]    126-II-3: classificacao em 8.2 min
+[2026-11-02 12:22:56]    126-II-3 | edicao: pixel F1=0.819 | objeto F1=0.675 R=0.692 fusoes=26 IoU=0.707 dist.contorno=1.07 m
+[2026-11-02 12:23:32]    126-II-3 | fotogrametria: pixel F1=0.815 | objeto F1=0.669 R=0.687 fusoes=26 IoU=0.702 dist.contorno=1.11 m
+[2026-11-02 12:23:32]    126-II-3: concluida em 9.9 min
+[2026-11-02 12:31:48]    126-IV-1: classificacao em 8.3 min
+[2026-11-02 12:32:43]    126-IV-1 | edicao: pixel F1=0.810 | objeto F1=0.652 R=0.593 fusoes=72 IoU=0.702 dist.contorno=0.94 m
+[2026-11-02 12:33:13]    126-IV-1 | fotogrametria: pixel F1=0.813 | objeto F1=0.659 R=0.599 fusoes=71 IoU=0.705 dist.contorno=0.93 m
+[2026-11-02 12:33:13]    126-IV-1: concluida em 9.7 min
+[2026-11-02 12:33:13]    TOTAL unet_resnet152_b8_20261031_071215 | edicao: pixel F1=0.828 | objeto F1=0.669 fusoes=187 dist.contorno=1.00 m
+[2026-11-02 12:33:13]    TOTAL unet_resnet152_b8_20261031_071215 | fotogrametria: pixel F1=0.828 | objeto F1=0.671 fusoes=179 dist.contorno=1.00 m
+[2026-11-02 12:33:13] MODELO faseB_ndsm | unet_resnet50_b8_20261030_000624 | 5 bandas
+[2026-11-02 12:41:36]    126-I-3: classificacao em 8.4 min
+[2026-11-02 12:42:50]    126-I-3 | edicao: pixel F1=0.844 | objeto F1=0.687 R=0.653 fusoes=91 IoU=0.727 dist.contorno=0.97 m
+[2026-11-02 12:43:30]    126-I-3 | fotogrametria: pixel F1=0.845 | objeto F1=0.693 R=0.660 fusoes=84 IoU=0.729 dist.contorno=0.96 m
+[2026-11-02 12:43:30]    126-I-3: concluida em 10.3 min
+[2026-11-02 12:51:19]    126-II-3: classificacao em 7.8 min
+[2026-11-02 12:52:23]    126-II-3 | edicao: pixel F1=0.824 | objeto F1=0.677 R=0.690 fusoes=27 IoU=0.713 dist.contorno=1.05 m
+[2026-11-02 12:53:00]    126-II-3 | fotogrametria: pixel F1=0.819 | objeto F1=0.668 R=0.683 fusoes=27 IoU=0.709 dist.contorno=1.08 m
+[2026-11-02 12:53:00]    126-II-3: concluida em 9.5 min
+[2026-11-02 13:00:49]    126-IV-1: classificacao em 7.8 min
+[2026-11-02 13:01:43]    126-IV-1 | edicao: pixel F1=0.811 | objeto F1=0.642 R=0.587 fusoes=76 IoU=0.701 dist.contorno=0.94 m
+[2026-11-02 13:02:14]    126-IV-1 | fotogrametria: pixel F1=0.814 | objeto F1=0.653 R=0.597 fusoes=75 IoU=0.703 dist.contorno=0.92 m
+[2026-11-02 13:02:14]    126-IV-1: concluida em 9.2 min
+[2026-11-02 13:02:14]    TOTAL unet_resnet50_b8_20261030_000624 | edicao: pixel F1=0.830 | objeto F1=0.670 fusoes=194 dist.contorno=0.99 m
+[2026-11-02 13:02:14]    TOTAL unet_resnet50_b8_20261030_000624 | fotogrametria: pixel F1=0.830 | objeto F1=0.673 fusoes=186 dist.contorno=0.99 m
+[2026-11-02 13:02:14] AVALIACAO DOS MODELOS - total das ortos de teste, referencias na posicao original
+Data: 2026-11-02 13:02
+
+REFERENCIA: edicao  (D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\a_constr_Limpa.shp)
+grupo           modelo                                     UA     PA      OA  kappa   F1px   F1pg |      P     R  F1obj   cob  fus   IoU  erroA%  desl  dcont
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+faseB_ndsm      unet_resnet50_b8_20261030_000624        0.846  0.815  0.9924  0.826  0.830  0.827 |  0.699 0.644  0.670 0.825  194 0.715    -1.1  1.49   0.99
+faseB_ndsm      unet_resnet152_b8_20261031_071215       0.849  0.809  0.9923  0.824  0.828  0.826 |  0.697 0.644  0.669 0.816  187 0.713    -2.1  1.50   1.00
+faseB_ndsm      deeplab_resnet101_b8_20261029_175624    0.859  0.713  0.9908  0.775  0.779  0.774 |  0.673 0.530  0.593 0.695  171 0.680   -11.9  1.65   1.20
+faseB_ndsm      samlora_vit_l_b8_20261030_151830        0.723  0.796  0.9884  0.752  0.758  0.755 |  0.568 0.604  0.586 0.831  244 0.695     6.4  1.70   1.12
+
+REFERENCIA: fotogrametria  (D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\construcoes_fotogrametria_Limpa.shp)
+grupo           modelo                                     UA     PA      OA  kappa   F1px   F1pg |      P     R  F1obj   cob  fus   IoU  erroA%  desl  dcont
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+faseB_ndsm      unet_resnet50_b8_20261030_000624        0.845  0.815  0.9924  0.826  0.830  0.827 |  0.700 0.648  0.673 0.825  186 0.715    -1.3  1.48   0.99
+faseB_ndsm      unet_resnet152_b8_20261031_071215       0.848  0.809  0.9923  0.824  0.828  0.826 |  0.697 0.646  0.671 0.819  179 0.713    -2.1  1.51   1.00
+faseB_ndsm      deeplab_resnet101_b8_20261029_175624    0.858  0.713  0.9908  0.774  0.779  0.774 |  0.673 0.532  0.595 0.694  163 0.680   -12.1  1.64   1.20
+faseB_ndsm      samlora_vit_l_b8_20261030_151830        0.723  0.796  0.9884  0.752  0.758  0.755 |  0.568 0.606  0.586 0.831  235 0.695     6.4  1.69   1.11
+
+UA, PA, OA, kappa, F1px: ao pixel, classificacao, classe edificio. F1pg: F1 ao pixel dos poligonos regularizados (produto final). P, R, F1obj: por objeto, poligonos regularizados (IoU >= 0.5). cob: cobertura >= 50 %. fus: fusoes. erroA%: erro de area medio. desl: deslocamento do centroide (m). dcont: distancia media entre contornos (m).
+[2026-11-02 13:02:14] Avaliacao terminada

@@ -1,0 +1,20 @@
+AVALIACAO DOS MODELOS - total das ortos de teste, referencias na posicao original
+Data: 2026-11-02 13:02
+
+REFERENCIA: edicao  (D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\a_constr_Limpa.shp)
+grupo           modelo                                     UA     PA      OA  kappa   F1px   F1pg |      P     R  F1obj   cob  fus   IoU  erroA%  desl  dcont
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+faseB_ndsm      unet_resnet50_b8_20261030_000624        0.846  0.815  0.9924  0.826  0.830  0.827 |  0.699 0.644  0.670 0.825  194 0.715    -1.1  1.49   0.99
+faseB_ndsm      unet_resnet152_b8_20261031_071215       0.849  0.809  0.9923  0.824  0.828  0.826 |  0.697 0.644  0.669 0.816  187 0.713    -2.1  1.50   1.00
+faseB_ndsm      deeplab_resnet101_b8_20261029_175624    0.859  0.713  0.9908  0.775  0.779  0.774 |  0.673 0.530  0.593 0.695  171 0.680   -11.9  1.65   1.20
+faseB_ndsm      samlora_vit_l_b8_20261030_151830        0.723  0.796  0.9884  0.752  0.758  0.755 |  0.568 0.604  0.586 0.831  244 0.695     6.4  1.70   1.12
+
+REFERENCIA: fotogrametria  (D:\Users\Cap_Almeida\Projeto\126\126_Construcoes\SHP_vf\construcoes_fotogrametria_Limpa.shp)
+grupo           modelo                                     UA     PA      OA  kappa   F1px   F1pg |      P     R  F1obj   cob  fus   IoU  erroA%  desl  dcont
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+faseB_ndsm      unet_resnet50_b8_20261030_000624        0.845  0.815  0.9924  0.826  0.830  0.827 |  0.700 0.648  0.673 0.825  186 0.715    -1.3  1.48   0.99
+faseB_ndsm      unet_resnet152_b8_20261031_071215       0.848  0.809  0.9923  0.824  0.828  0.826 |  0.697 0.646  0.671 0.819  179 0.713    -2.1  1.51   1.00
+faseB_ndsm      deeplab_resnet101_b8_20261029_175624    0.858  0.713  0.9908  0.774  0.779  0.774 |  0.673 0.532  0.595 0.694  163 0.680   -12.1  1.64   1.20
+faseB_ndsm      samlora_vit_l_b8_20261030_151830        0.723  0.796  0.9884  0.752  0.758  0.755 |  0.568 0.606  0.586 0.831  235 0.695     6.4  1.69   1.11
+
+UA, PA, OA, kappa, F1px: ao pixel, classificacao, classe edificio. F1pg: F1 ao pixel dos poligonos regularizados (produto final). P, R, F1obj: por objeto, poligonos regularizados (IoU >= 0.5). cob: cobertura >= 50 %. fus: fusoes. erroA%: erro de area medio. desl: deslocamento do centroide (m). dcont: distancia media entre contornos (m).

@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 r"""
-08_treinar_modelos.py  (ArcGIS Pro 3.6)
+08_treinar_modelos_nDSM.py  (ArcGIS Pro 3.6)
 
 Treino sequencial dos modelos de segmentacao de edificios (U-Net, DeepLabV3 e
-SAMLoRA), com os chips exportados a partir dos vetores na POSICAO ORIGINAL.
+SAMLoRA), com os chips do 07_exportar_chips_nDSM.py (vetores na posicao original). 
+Fase B: ortomosaico com 5 bandas (R, G, B, NIR, nDSM). Os pesos da banda do nDSM 
+sao inicializados sem pre-treino (os codificadores pre-treinados so conhecem RGB).
 
 Na lista EXPERIENCIAS escolhe-se o que treinar (ATIVO = True/False) e, para cada
 modelo, o batch size, os argumentos, o learning rate e o numero de epocas.
-Por defeito, todos usam as mesmas regras da segunda serie (batch 8, 20 epocas,
-10 % de validacao, learning rate fixo de 2e-4, sem paragem antecipada), para que
-os resultados sejam comparaveis com os modelos treinados com os vetores corrigidos.
+Regras comuns a todos os modelos e as duas fases: batch 8, 20 epocas, 10 % de
+validacao, learning rate fixo de 2e-4, codificador congelado e sem paragem
+antecipada, para que os resultados sejam diretamente comparaveis.
 
 Funcionalidades:
-  - SALTAR_CONCLUIDOS: salta as experiencias que ja tem um modelo concluido
-    (pasta <tipo>_<backbone>_b*_* com .emd) em PASTA_MODELOS; pastas sem .emd
-    (treinos interrompidos) nao contam e sao listadas no registo;
   - se faltar memoria na GPU, tenta o batch seguinte da lista;
   - se um ficheiro estiver bloqueado por outro processo (WinError 32, por exemplo
     o antivirus), espera e tenta de novo com o mesmo batch;
@@ -61,7 +60,7 @@ LR     = 0.0002        # fixo: o calculo automatico revelou-se pouco reprodutive
 # Experiencias: (ATIVO, tipo de modelo, backbone, batch sizes a tentar por ordem,
 #                argumentos, learning rate, epocas)
 # Ordenadas do mais rapido para o mais lento, para ter resultados cedo.
-# Tempos aproximados por modelo (20 epocas, serie 2): entre parenteses.
+# Tempos aproximados por modelo (20 epocas, fase A): entre parenteses.
 EXPERIENCIAS = [
 #    (True,  "DEEPLAB", "RESNET34",  [8, 4],    ARGS_CNN,     LR, EPOCAS),   # ~3 h
 #    (True,  "UNET",    "RESNET34",  [8, 4],    ARGS_CNN,     LR, EPOCAS),   # ~4 h

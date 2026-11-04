@@ -280,14 +280,10 @@ def main(rel):
         f"({'OK' if n_teste + n_treino == n_total else 'DIFERENTE do total!'})")
     rel()
     rel("PRÓXIMOS PASSOS")
-    rel(f"  1. criar_rotulos_borda.py com ENTRADA = {saida_treino}")
-    rel(f"     e AREA_ESTUDO = {saida_mascara}")
-    rel(f"  2. Export Training Data for Deep Learning com Input Mask Polygons = "
-        f"{saida_mascara}")
+    rel(f"  1. 07_exportar_chips.py com EDIFICIOS = {saida_treino},")
+    rel(f"     MASCARA = {saida_mascara} e ZONA_TESTE = {saida_zona}")
     rel(f"     (usar a máscara num só polígono, e não a {os.path.basename(saida_mascara_ortos)})")
-    rel(f"  3. Avaliação: ZONA_TESTE = {saida_zona}, CAMPO_NOME = \"{CAMPO_NOME}\",")
-    rel(f"     REFERENCIA = {saida_teste}, MARGENS = {saida_margem}")
-    rel()
+    rel(f"  2. 09_avaliar_modelos.py com ZONA_TESTE = {saida_zona} e CAMPO_NOME = \"{CAMPO_NOME}\"")
     rel("FICHEIROS DE SAÍDA")
     for s in saidas + ([saida_margem] if n_margem else []) + [saida_txt]:
         rel(f"  {s}")

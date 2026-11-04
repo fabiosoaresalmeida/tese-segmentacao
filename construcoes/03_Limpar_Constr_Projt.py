@@ -1,38 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-03_Limpar_Constr_Projt.py
+03_Limpar_Constr_Projt.py  (ArcGIS Pro 3.6)
 
-Script para ArcGIS Pro (arcpy) que prepara a camada de construções (a_constr)
-para servir de dados de referência ao treino do modelo de segmentação:
+Prepara a camada de construções (a_constr) da edição cartográfica para servir de
+referência ao treino e à avaliação dos modelos de segmentação de edifícios.
+Primeiro passo da cadeia; a saída (a_constr_Limpa.shp) é a entrada do
+06_separar_treino_teste.py e a referência ao píxel do 09_avaliar_modelos.py.
 
 0. Verifica se o sistema de coordenadas da shapefile é o mesmo do ortomosaico.
-   Se não for, avisa e a shapefile de saída é PROJETADA para o sistema de
-   coordenadas do ortomosaico, com a transformação geográfica mais adequada
-   quando os datums são diferentes (por exemplo, Lisboa -> WGS 84). A geometria
-   original não é alterada de outra forma: não há rotações nem translações.
-1. Elimina os polígonos que não estejam totalmente dentro da área do
-   ortomosaico (.tif), incluindo os que intersetam o seu limite.
-2. Elimina os polígonos cujo campo "source" contenha alguma das palavras:
-   - "campo"
-   - "limite"
-   - "piscina"
-   - "electrica"
-   A comparação ignora maiúsculas/minúsculas e acentos
-   (ex.: "Eléctrica", "eletrica" e "ELÉCTRICA" são tratadas da mesma forma).
-   As ruínas são mantidas.
+   Se não for, avisa e a shapefile de saída é PROJETADA para o sistema do
+   ortomosaico, com a transformação geográfica mais adequada quando os datums são
+   diferentes (por exemplo, Lisboa -> WGS 84). A projeção não altera a posição dos
+   edifícios no terreno: os vetores mantêm a posição original da restituição.
+1. Elimina os polígonos que não estejam totalmente dentro da área do ortomosaico
+   (.tif), incluindo os que intersetam o seu limite.
+2. Elimina os polígonos cujo campo "source" contenha alguma das palavras
+   "campo", "limite", "piscina" ou "electrica" (sem distinguir maiúsculas,
+   minúsculas e acentos). As ruínas são mantidas.
 
-No fim apresenta um relatório com:
-- sistemas de coordenadas da entrada, do ortomosaico e da saída, e a
-  transformação geográfica usada (se houve projeção)
-- número inicial de polígonos
-- número removido por estar fora/no limite do ortomosaico
-- número removido por palavra-chave (total, por palavra e por valor de "source")
-- número final de polígonos
+No fim apresenta um relatório com os sistemas de coordenadas (entrada,
+ortomosaico e saída) e a transformação usada, o número inicial de polígonos, os
+removidos por estarem fora ou no limite do ortomosaico, os removidos por
+palavra-chave (por palavra e por valor de "source") e o número final.
 
-Como usar:
-- Corre este script na janela Python do ArcGIS Pro, ou como script standalone
-  (com o Python do ArcGIS Pro como interpretador).
-- Ajusta as variáveis na secção "PARÂMETROS" abaixo.
+Pode correr na janela Python do ArcGIS Pro ou no Python Command Prompt:
+    python "D:\\Users\\Cap_Almeida\\Projeto\\Python\\03_Limpar_Constr_Projt.py"
+Os parâmetros estão na secção "PARÂMETROS".
 """
 
 import arcpy

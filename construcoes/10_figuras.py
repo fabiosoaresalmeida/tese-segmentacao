@@ -22,7 +22,7 @@ Os recortes podem ser indicados por coordenadas (centro e lado, em metros) ou
 escolhidos automaticamente (a janela com mais area edificada na referencia).
 
 Correr no Python Command Prompt do ArcGIS Pro:
-    python "D:\Users\Cap_Almeida\Projeto\Python\22_figuras.py"
+    python "D:\Users\Cap_Almeida\Projeto\Python\10_figuras.py"
 """
 
 import os
@@ -37,7 +37,7 @@ from matplotlib.lines import Line2D
 # ============================================================
 # CONFIGURACAO
 # ============================================================
-# Pasta de avaliacao de cada grupo (as do 20_avaliar_modelos.py / 09_avaliar_modelos.py)
+# Pasta de avaliacao de cada grupo (as do 09_avaliar_modelos.py)
 PASTAS_GRUPOS = {
     "faseA_4bandas": r"D:\DL\Avaliacao\126_original",        # RGB + NIR
     "faseB_ndsm":    r"D:\DL\Avaliacao\126_original_ndsm",   # RGB + NIR + nDSM

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 r"""
-07_exportar_chips.py  (ArcGIS Pro 3.6)
+07_exportar_chips_nDSM.py  (ArcGIS Pro 3.6)
 
 Exporta os chips de treino (Export Training Data For Deep Learning) a partir do
 ortomosaico e dos edifícios de TREINO na posição original da restituição,

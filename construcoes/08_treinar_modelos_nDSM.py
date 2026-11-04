@@ -3,8 +3,8 @@ r"""
 08_treinar_modelos_nDSM.py  (ArcGIS Pro 3.6)
 
 Treino sequencial dos modelos de segmentacao de edificios (U-Net, DeepLabV3 e
-SAMLoRA), com os chips do 07_exportar_chips_nDSM.py (vetores na posicao original). 
-Fase B: ortomosaico com 5 bandas (R, G, B, NIR, nDSM). Os pesos da banda do nDSM 
+SAMLoRA), com os chips do 07_exportar_chips_nDSM.py (vetores na posicao original).
+Fase B: ortomosaico com 5 bandas (R, G, B, NIR, nDSM). Os pesos da banda do nDSM
 sao inicializados sem pre-treino (os codificadores pre-treinados so conhecem RGB).
 
 Na lista EXPERIENCIAS escolhe-se o que treinar (ATIVO = True/False) e, para cada
@@ -14,6 +14,9 @@ validacao, learning rate fixo de 2e-4, codificador congelado e sem paragem
 antecipada, para que os resultados sejam diretamente comparaveis.
 
 Funcionalidades:
+  - SALTAR_CONCLUIDOS: salta as experiencias que ja tem um modelo concluido
+    (pasta <tipo>_<backbone>_b*_* com .emd) em PASTA_MODELOS; pastas sem .emd
+    (treinos interrompidos) nao contam e sao listadas no registo;
   - se faltar memoria na GPU, tenta o batch seguinte da lista;
   - se um ficheiro estiver bloqueado por outro processo (WinError 32, por exemplo
     o antivirus), espera e tenta de novo com o mesmo batch;
@@ -25,7 +28,7 @@ Funcionalidades:
       <modelo>\mensagens.txt  as mensagens completas da ferramenta
 
 Correr no Python Command Prompt do ArcGIS Pro (com o ArcGIS Pro FECHADO):
-    python "D:\Users\Cap_Almeida\Projeto\Python\08_treinar_modelos.py"
+    python "D:\Users\Cap_Almeida\Projeto\Python\08_treinar_modelos_nDSM.py"
 
 ANTES DE CORRER:
   - "CUDA - Sysmem Fallback Policy" = "Prefer No Sysmem Fallback" (Painel NVIDIA)

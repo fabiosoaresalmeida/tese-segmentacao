@@ -2,38 +2,37 @@
 r"""
 06_separar_treino_teste.py  (ArcGIS Pro 3.6)
 
-A partir dos ortofotos escolhidos para teste (grelha criada por analisar_ortos.py):
-  - zona_teste.shp       área dos ortofotos de teste, com UM POLÍGONO POR ORTOFOTO
-                         e o campo NOME (o mesmo da grelha), pronta a usar no
-                         09_avaliar_modelos.py com CAMPO_NOME = "NOME"
-  - mascara_treino.shp   resto da carta, num só polígono (usar em Input Mask Polygons
-                         do Export Training Data e em AREA_ESTUDO do criar_rotulos_borda.py)
-  - mascara_treino_ortos.shp  a mesma área, com UM POLÍGONO POR ORTOFOTO de treino e o
-                         campo NOME (para análises por ortofoto; não usar na exportação)
-  - <PREFIXO>_teste.shp  edifícios de TESTE: só os que estão COMPLETAMENTE dentro
-                         da zona de teste
-  - <PREFIXO>_treino.shp edifícios de TREINO: todos os outros, incluindo os das
-                         margens que atravessam o limite para um ortofoto de treino
+Separa os edifícios em treino e teste, a partir das ortofotos escolhidas para
+teste (grelha das ortofotos, ortos_grelha.shp). Entrada: a_constr_Limpa.shp,
+criada pelo 03_Limpar_Constr_Projt.py, com os edifícios na posição original.
+
+Saídas:
+  - zona_teste.shp       área das ortofotos de teste, com UM POLÍGONO POR ORTOFOTO
+                         e o campo NOME (usada no 07 e no 09)
+  - mascara_treino.shp   resto da carta, num só polígono (Input Mask Polygons
+                         da exportação dos chips, no 07)
+  - mascara_treino_ortos.shp  a mesma área, com um polígono por ortofoto de treino e
+                         o campo NOME (para análises por ortofoto; não usar na exportação)
+  - <PREFIXO>_treino.shp edifícios de TREINO: todos os que não estão inteiramente
+                         na zona de teste, incluindo os das margens
+  - <PREFIXO>_teste.shp  edifícios de TESTE: só os COMPLETAMENTE dentro da zona de teste
   - <PREFIXO>_margens_teste.shp  edifícios que atravessam o limite da zona de teste
 
-Os edifícios das margens (cortados pelo limite da zona de teste) ficam só no
-treino: assim a parte que está do lado do treino é rotulada como edifício e não
-como fundo. As tiles de treino ficam dentro da máscara, por isso o modelo nunca
-vê a parte que está na zona de teste.
-Edifícios que atravessam o limite entre dois ortofotos de TESTE contíguos ficam
-no teste, porque estão inteiramente dentro da zona de teste (a seleção é feita
-sobre a união dos ortofotos de teste, e não sobre cada polígono isolado).
+Os edifícios das margens ficam no treino: a parte do lado do treino é rotulada como
+edifício e não como fundo. Os chips de treino ficam dentro da máscara, por isso o
+modelo nunca vê a parte que está na zona de teste. Edifícios que atravessam o
+limite entre duas ortofotos de TESTE contíguas ficam no teste (a seleção é feita
+sobre a união das ortofotos de teste).
 
 Os ficheiros originais NÃO são alterados. O Z e todos os atributos são mantidos.
 
 Pode correr:
   - na janela Python do ArcGIS Pro (as camadas finais são abertas no mapa ativo);
-  - no Python Command Prompt:
-        python "D:\Users\Cap_Almeida\Projeto\60_separar_treino_teste.py"
-    (sem mapa: as camadas não são abertas, mas os ficheiros são criados igual).
-    Neste caso, fechar antes o ArcGIS Pro ou remover do mapa as camadas de saída,
-    para não haver ficheiros bloqueados.
+  - no Python Command Prompt (sem abrir camadas; fechar antes o ArcGIS Pro ou
+    remover do mapa as camadas de saída, para não haver ficheiros bloqueados):
+        python "D:\Users\Cap_Almeida\Projeto\Python\06_separar_treino_teste.py"
 """
+
 import os
 import time
 import datetime

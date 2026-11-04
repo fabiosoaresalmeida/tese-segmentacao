@@ -3,27 +3,33 @@ r"""
 07_exportar_chips.py  (ArcGIS Pro 3.6)
 
 Exporta os chips de treino (Export Training Data For Deep Learning) a partir do
-ortomosaico e dos edifícios de TREINO na POSIÇÃO ORIGINAL da restituição
-(sem rotações nem translações), limitados à máscara de treino.
+ortomosaico e dos edifícios de TREINO na posição original da restituição,
+limitados à máscara de treino (saídas do 06_separar_treino_teste.py).
+
+Fase B: ortomosaico com 5 bandas (R, G, B, NIR, nDSM normalizado 0-40 m)
+
+Os parâmetros dos chips (256 px, passo de 128 px, 0,5 m) e as entradas são iguais
+nas duas fases; só muda o ortomosaico.
 
 Antes de exportar, verifica:
   - que as entradas existem;
   - que os edifícios, a máscara e o ortomosaico estão no mesmo sistema de coordenadas;
-  - que o campo de classe existe e quais os valores que tem. Se não existir (ou se
-    CRIAR_CLASSE_CONSTANTE = True), cria uma cópia temporária dos edifícios com um
-    campo "classe" = 1 em todos (o ficheiro original não é alterado).
+  - o campo de classe e os seus valores. Se não existir (ou se
+    CRIAR_CLASSE_CONSTANTE = True), cria uma cópia temporária dos edifícios, em
+    disco, com o campo "classe" = 1 (o ficheiro original não é alterado).
 
 Depois de exportar:
   - conta os chips de imagem e de rótulo;
   - verifica que nenhum chip entra na zona de teste;
   - calcula a proporção de píxeis de cada classe (numa amostra de chips);
-  - grava um relatório txt na pasta de saída.
+  - grava o relatório exportacao_relatorio.txt na pasta de saída.
 
 Opcional: no fim, lança o script de treino (só no Python Command Prompt).
 
 Pode correr na janela Python do ArcGIS Pro ou no Python Command Prompt:
-    python "D:\Users\Cap_Almeida\Projeto\61_exportar_chips.py"
+    python "D:\Users\Cap_Almeida\Projeto\Python\07_exportar_chips.py"
 """
+
 import os
 import sys
 import time

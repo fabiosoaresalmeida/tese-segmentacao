@@ -8,7 +8,7 @@ Para cada modelo e cada orto de teste indicados:
   1. cria uma copia da orto de teste (5 bandas) com a banda do nDSM SUBSTITUIDA
      POR ZEROS (como se todo o terreno fosse plano, sem edificios);
   2. classifica essa copia com o modelo;
-  3. compara com a classificacao feita com o nDSM real (a do 20_avaliar_modelos.py):
+  3. compara com a classificacao feita com o nDSM real (a do 09_avaliar_modelos.py):
        - proporcao de pixeis cuja classe muda entre as duas classificacoes;
        - metricas ao pixel das duas classificacoes contra a referencia.
 
@@ -18,7 +18,7 @@ Interpretacao:
   - se a classificacao mudar muito e as metricas descerem, o modelo USA o nDSM.
 
 Correr no Python Command Prompt do ArcGIS Pro (com a GPU livre):
-    python "D:\Users\Cap_Almeida\Projeto\Python\23_teste_ndsm_zero.py"
+    python "D:\Users\Cap_Almeida\Projeto\Python\11_teste_ndsm_zero.py"
 """
 
 import os
@@ -32,7 +32,7 @@ from datetime import datetime
 # ============================================================
 # CONFIGURACAO
 # ============================================================
-PASTA_AVALIACAO = r"D:\DL\Avaliacao\126_original_ndsm"     # avaliacao da fase B (20_avaliar_modelos.py)
+PASTA_AVALIACAO = r"D:\DL\Avaliacao\126_original_ndsm"     # avaliacao da fase B (09_avaliar_modelos.py)
 GRUPO           = "faseB_ndsm"
 PASTA_MODELOS   = r"D:\DL\Modelos\126_original_ndsm"
 REFERENCIA      = "edicao"

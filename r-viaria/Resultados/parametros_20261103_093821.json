@@ -1,0 +1,28 @@
+{
+  "corrida": "20261103_093821",
+  "modo_teste": false,
+  "versoes": [
+    "bruto",
+    "pos",
+    "centerline"
+  ],
+  "tolerancias": [
+    2.0,
+    3.0,
+    5.0
+  ],
+  "espessura_max": 20.0,
+  "troco_min": 10.0,
+  "margem_espelho_m": 32.0,
+  "janela_suave": 3,
+  "abertura_px": 1,
+  "area_min_m2": 50.0,
+  "buraco_max_m2": 8.0,
+  "dangle_m": 15.0,
+  "travessa_max_m": 20.0,
+  "angulo_travessa": 30.0,
+  "colinear_min": 150.0,
+  "suave_m": 12.0,
+  "extender_m": 20.0,
+  "simplificar_m": 1.0
+}

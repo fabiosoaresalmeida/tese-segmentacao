@@ -1,18 +1,13 @@
-# ---------------------------------------------------------------------------
-# CONFIGURAÇÃO
-# ---------------------------------------------------------------------------
-ORTO = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126.tif"          # ortomosaico das 16 ortos
-ETIQUETAS = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP\etiquetas_vias.shp"     # criado pelo 41
-AREA_TREINO = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP\area_treino.shp"     # criado pelo 40
-PASTA_SAIDA = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training\vias_chip512"
-
 # -*- coding: utf-8 -*-
 """
-Export Training Data For Deep Learning - rede viária (Classified Tiles).
-Três conjuntos:
-  - multiclasse: Via pavimentada / Via não pavimentada / Ferrovia (U-Net)
+MTRE/42_Export_RViaria.py
+Export Training Data For Deep Learning - rede viária (Classified Tiles), chips 512.
+Conjuntos:
   - rede_viaria: binário, via pavimentada + não pavimentada (Multi-Task Road Extractor)
   - ferrovia:    binário, ferrovia (Multi-Task Road Extractor)
+  - multiclasse: Via pavimentada / Via não pavimentada / Ferrovia, para o U-Net
+                 (abandonado: com chips 512 o U-Net esgotava a memória da GPU; o U-Net
+                 usa chips 256, exportados pelo unet/42_Export_RViaria_unet.py)
 Executar na janela Python ou num Notebook do ArcGIS Pro 3.6.
 Requer a extensão Image Analyst.
 """
@@ -30,10 +25,10 @@ arcpy.env.overwriteOutput = True
 ORTO = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126.tif"          # ortomosaico das 16 ortos
 SHP = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP"
 TRAINING = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training"
-AREA_TREINO = os.path.join(SHP, "area_treino.shp")                     # criado pelo 40
+AREA_TREINO = os.path.join(SHP, "area_treino.shp")                     # criado pelo 40b
 
 CONJUNTOS = {
-    # 3 classes: U-Net
+    # 3 classes: U-Net (não usado, ver a docstring)
     "multiclasse": (os.path.join(SHP, "etiquetas_vias.shp"),          # criado pelo 41
                     os.path.join(TRAINING, "vias_chip512_unet")),
     # binários: Multi-Task Road Extractor
@@ -42,7 +37,7 @@ CONJUNTOS = {
     "ferrovia":    (os.path.join(SHP, "etiquetas_ferrovia_binario.shp"),      # criado pelo 41b
                     os.path.join(TRAINING, "ferrovia_chip512_binario")),
 }
-EXPORTAR = ["multiclasse", "rede_viaria", "ferrovia"]
+EXPORTAR = ["rede_viaria", "ferrovia"]
 
 # Pastas já existentes:
 #  - válidas (todos os pares do map.txt existem): saltadas, salvo REFAZER = True
@@ -76,6 +71,9 @@ def validar_pasta(pasta):
 for nome in EXPORTAR:
     etiquetas, pasta = CONJUNTOS[nome]
     print(f"\n=== {nome} -> {pasta}")
+    if not arcpy.Exists(etiquetas):
+        print(f"  ERRO: etiquetas inexistentes ({etiquetas}): conjunto saltado")
+        continue
     if os.path.exists(pasta):
         pares, falta = validar_pasta(pasta)
         if pares and not falta and not REFAZER:
@@ -112,7 +110,8 @@ for nome in EXPORTAR:
     )
 
     print(arcpy.GetMessages())
-    n_chips = len(os.listdir(os.path.join(pasta, "images")))
+    n_chips = sum(1 for f in os.listdir(os.path.join(pasta, "images"))
+                  if f.lower().endswith((".tif", ".tiff")))     # só os chips, sem .tfw/.aux.xml
     pares, falta = validar_pasta(pasta)
     print(f"Chips exportados: {n_chips} | pares no map.txt: {pares} | "
           f"tempo: {(time.time() - t0) / 60:.1f} min")

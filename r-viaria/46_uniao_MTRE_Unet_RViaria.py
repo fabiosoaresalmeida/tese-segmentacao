@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-46_uniao_RViaria.py - Avaliação da UNIÃO das previsões do Multi-Task Road Extractor
-e do U-Net (rede viária), com as mesmas métricas do 44 (v4).
+46_uniao_MTRE_Unet_RViaria.py - Avaliação da UNIÃO das previsões do Multi-Task Road
+Extractor e do U-Net (rede viária), com as mesmas métricas do 44_avaliar_RViaria.py.
 
 União: em cada ortofoto de teste, uma via é prevista se QUALQUER um dos modelos
 a previu (máscara MTRE OU máscara U-Net). A união é feita sobre as máscaras
@@ -10,7 +10,8 @@ A seguir, a máscara unida passa pelas mesmas versões de vetorização do 44:
   bruto      : Thin -> Raster to Polyline
   pos        : fase A (limpeza do raster) -> Thin -> fase B (esporões, travessas,
                alisamento, fecho de falhas)
-  centerline : fase A -> polígonos -> Simplify Polygon -> Polygon to Centerline -> fase B
+  centerline : fase A -> polígonos -> Simplify Polygon -> Polygon to Centerline
+               -> Trim Line -> fase B
 e são calculadas as mesmas métricas (matriz de confusão por píxel, píxel com
 tolerância, eixos com completeness/correctness/quality, completeness por classe).
 
@@ -18,7 +19,13 @@ Os dois modelos de origem são avaliados na mesma corrida (usam as inferências 
 existentes), para a comparação ficar nos mesmos CSV.
 
 Pré-requisito: o 44 já ter feito a inferência dos dois modelos nas 3 ortos
-(ficheiros <PASTA_AVAL>/<modelo>/<folha>_classificado.tif).
+(ficheiros <PASTA_AVAL>/<modelo>/<folha>_classificado.tif). Se faltar alguma, este
+script faz essa inferência antes de criar a união.
+
+Saídas: as do 44 (pasta corrida_<data_hora> de cada modelo, incluindo uniao_mtre_unet),
+com os ficheiros gerais prefixados por 'uniao_': uniao_parametros_<corrida>.json,
+uniao_matriz_confusao_<corrida>.csv, uniao_pixel_tolerancia_<corrida>.csv,
+uniao_metricas_eixos_<corrida>.csv, uniao_completeness_classes_<corrida>.csv.
 
 Executar na linha de comandos (arcgispro-py3). Requer Image Analyst e Spatial Analyst;
 a versão 'centerline' requer a extensão do Polygon to Centerline (Topographic Production).
@@ -53,9 +60,9 @@ arcpy.env.gpuId = 0
 # CONFIGURAÇÃO
 # ---------------------------------------------------------------------------
 MODO_TESTE = False           # True = só ORTO_TESTE; False = as 3 ortos de teste
-ORTO_TESTE = "126-I-2"     # tem todas as classes, incluindo a ferrovia
+ORTO_TESTE = "126-I-2"       # tem todas as classes, incluindo a ferrovia
 
-MIN_GPU_LIVRE_GB = 6.0       # não arranca a inferência com menos memória livre na GPU
+MIN_GPU_LIVRE_GB = 6.0       # com REFAZER_INFERENCIA, não arranca com menos memória livre na GPU
 
 PASTA_ORTOS = r"D:\Users\Cap_Almeida\Projeto\M888_Ortos\126_Ortofotos"
 MAX_FRACAO_VIA = 0.30   # acima disto o raster classificado é suspeito: não vetorizar
@@ -67,13 +74,13 @@ PASTA_AVAL = r"D:\DL\Avaliacao\126_RViaria"
 
 VIAS = ["Auto_estrada", "Estrada_larga", "Estrada_estreita", "Arruamento",
         "Acesso_auto", "Caminho_carreteiro", "Caminho_a_pe_posto"]
-FERROVIA = ["Caminho_de_ferro_via_larga_unica"]
 
 MODELOS = {
     "mtre_rede_viaria": dict(
         pasta=r"D:\DL\Modelos\126_RViaria\mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137",
         referencia=VIAS,
     ),
+    # U-Net binário (chips 256, backbone congelado): mesma tarefa e referência do MTRE
     "unet_rede_viaria": dict(
         pasta=r"D:\DL\Modelos\126_RViaria_Resnet50\unet_resnet50_rede_binario_b8_binario_lrlim_treino_20261102_1429",
         referencia=VIAS,
@@ -87,13 +94,13 @@ MODELOS = {
 
 MARGEM_ESPELHO_M = 32.0  # metros de imagem espelhada à volta da orto (usar o mesmo dos edifícios)
 APAGAR_ESPELHO = True   # apagar a orto espelhada temporária depois da inferência
-# Argumentos de inferência: o padding é calculado por modelo (1/4 do chip do .emd,
-# máximo 128), porque tem de ser menor do que metade do chip (256 -> 64, 512 -> 128)
+# Argumentos de inferência: o padding é calculado por modelo como 1/4 do chip do .emd
+# (256 -> 64, 512 -> 128; máximo PADDING_MAX), porque tem de ser menor do que metade do chip
 BATCH_INFERENCIA = 2      # batch pequeno: a GPU pode estar partilhada com um treino
 PADDING_MAX = 128
 TOLERANCIAS = [2.0, 3.0, 5.0]   # metros; 3 m é o valor principal, 2 e 5 para sensibilidade
 ESPESSURA_MAX = 20.0            # metros: espessura máxima das manchas para o Thin
-TROCO_MIN = 10.0                # metros: remove esporões e troços isolados mais curtos
+TROCO_MIN = 10.0                # metros: remove todos os troços mais curtos (no fim)
 REFAZER_INFERENCIA = False      # True para repetir a inferência mesmo que o raster exista
 
 # Larguras da referência por píxel: as MESMAS do 41 (etiquetas de treino)
@@ -110,7 +117,7 @@ LARGURA = {
 DESVIO_EIXO = 0.75
 LARGURA_MIN = 1.0
 
-# ---- Pós-processamento (versão 'pos') -------------------------------------
+# ---- Vetorização e pós-processamento (versões 'pos' e 'centerline') -------
 VERSOES = ["bruto", "pos", "centerline"]
 SIMPLIFICAR_M = 1.0     # centerline: tolerância do Simplify Polygon (Point Remove)
 # Fase A (raster)
@@ -446,8 +453,6 @@ def fmt(x):
     return "" if x is None else f"{x:.4f}"
 
 
-
-
 def guardar(r, caminho):
     r.save(caminho)
     return caminho
@@ -709,8 +714,8 @@ for nome, cfg in MODELOS.items():
                 criar_uniao(cfg["uniao"], folha, ras)
             else:
                 inferir(emd, tif, ras)
-        except arcpy.ExecuteError:
-            log(f"    ERRO na inferência; orto saltada:\n    {arcpy.GetMessages(2)}")
+        except (arcpy.ExecuteError, FileNotFoundError) as e:
+            log(f"    ERRO na inferência/união; orto saltada:\n    {arcpy.GetMessages(2) or e}")
             continue
         frac, valores = fracao_via(ras)
         log(f"    píxeis via: {frac:.1%} | valores no raster: {valores}")

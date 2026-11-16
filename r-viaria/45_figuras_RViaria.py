@@ -12,10 +12,11 @@ Figuras de comparação visual da rede viária, a partir dos resultados do
        (correto / falso positivo / omitido, tolerância TOL)
 
   B  fig_B_rede_<recorte>.png   REDE EM ÁREA MAIOR (lado x FATOR_B)
-       referência (eixos) | previsão (máscara) | resultado de cada modelo
-       (correto / falso positivo / omitido)
+       referência (eixos) | previsão (máscara) de cada modelo | resultado de cada
+       modelo (correto / falso positivo / omitido)
   B2 fig_B2_classes_<recorte>.png
-       igual, com as vias omitidas coloridas pela classe de origem
+       igual, mas sem os falsos positivos e com as vias omitidas coloridas pela
+       classe de origem
 
   C  fig_C_etapas_<modelo>_<recorte>.png   METODOLOGIA (vetorização)
        referência (buffer) | máscara prevista | eixos bruto | eixos pos | eixos
@@ -74,7 +75,8 @@ RECORTES = [
     ("Zona dispersa",  "126-IV-1",  None, None, 200, MODELOS_REDE),
     ("Autoestrada",    "126-III-4", "autoestrada", None, 250, MODELOS_REDE),
     ("Ferrovia",       "126-I-2",   None, None, 300, ["mtre_ferrovia"]),
-    # Zonas escolhidas à mão (coordenadas do centro lidas no ArcGIS Pro), por exemplo:
+    # Zonas escolhidas à mão (coordenadas do centro, no sistema das ortos, lidas no
+    # ArcGIS Pro), por exemplo (valores fictícios):
     # ("Caminhos em floresta", "126-IV-1", 230000.0, 461000.0, 200, MODELOS_REDE),
 ]
 
@@ -223,19 +225,6 @@ def rasterizar(fc, jan, m, campo=None, poligonos=False):
 
 
 MODELO_GRELHA = {}            # modelo usado para alinhar a grelha (preenchido em main)
-
-
-def recortar_janela(fc, jan, m, nome):
-    if not fc or not arcpy.Exists(fc):
-        return None
-    ext = extensao(jan, m)
-    pts = arcpy.Array([arcpy.Point(ext.XMin, ext.YMin), arcpy.Point(ext.XMin, ext.YMax),
-                       arcpy.Point(ext.XMax, ext.YMax), arcpy.Point(ext.XMax, ext.YMin),
-                       arcpy.Point(ext.XMin, ext.YMin)])
-    arcpy.management.CopyFeatures([arcpy.Polygon(pts, jan["sr"])], "memory/jan_poly")
-    out = f"memory/{nome}"
-    arcpy.analysis.PairwiseClip(fc, "memory/jan_poly", out)
-    return out
 
 
 _GEOM = {}

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-43_Treino_RViaria.py
-Train Deep Learning Model - rede viária.
-Três modelos, todos com ResNet-50 e learning rate automático:
-  - U-Net multiclasse (pavimentada / não pavimentada / ferrovia)
-  - Multi-Task Road Extractor binário: rede viária
-  - Multi-Task Road Extractor binário: ferrovia
-Cada um lê a sua exportação. Escolher os que correm com ativo=True.
+43_Treino_RViaria.py  (versão inicial, com learning rate automático)
+Train Deep Learning Model - rede viária, ResNet-50 e LR automático (LR Finder).
+Experiências previstas (cada uma lê a sua exportação; ativo=True para correr):
+  - U-Net multiclasse (pavimentada / não pavimentada / ferrovia): a única ativa;
+    não aprendeu (LR automático ~5e-5)
+  - Multi-Task Road Extractor binário: rede viária  (comentado: já treinado)
+  - Multi-Task Road Extractor binário: ferrovia     (comentado: já treinado)
+Substituído pelo 43_Treino_RViaria_LR_fixo.py; mantido como registo da 1.ª tentativa.
+Para reativar os MTRE, descomentar também PASTA_REDE e PASTA_FERRO.
 
 MODO_TESTE = True  -> 1 época por modelo, sem paragem automática, para validar
                       o fluxo, o LR encontrado, a memória da GPU e o tempo por época.

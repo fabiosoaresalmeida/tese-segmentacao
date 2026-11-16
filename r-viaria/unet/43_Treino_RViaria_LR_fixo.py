@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-43_Treino_RViaria.py
-Train Deep Learning Model - rede viária.
+43_Treino_RViaria_LR_fixo.py
+Train Deep Learning Model - rede viária, com o LR do LR Finder limitado a um intervalo
+(o LR é estimado antes do treino e passado ao Train Deep Learning Model como valor fixo).
 Experiências (ativo=True para correr):
   - U-Net binário: rede viária, chips 256 (rede_viaria_chip256_unet_binario),
     com LR do LR Finder limitado a LR_LIMITES
   - U-Net multiclasse: pavimentada / não pavimentada / ferrovia (desativado:
     3 tentativas sem aprender)
   - Multi-Task Road Extractor binários (rede viária, ferrovia): já treinados
+    (comentados; para os reativar, descomentar também PASTA_REDE e PASTA_FERRO)
 
 MODO_TESTE = True  -> 1 época por modelo, sem paragem automática, para validar
                       o fluxo, o LR encontrado, a memória da GPU e o tempo por época.
@@ -17,12 +19,14 @@ Registo guardado para cada experiência (pasta <modelo>_registo, ao lado da
 pasta do modelo, para não interferir com a escrita do modelo):
   - parametros.json : configuração completa, versões, GPU, nº de chips
   - mensagens.txt   : todas as mensagens do geoprocessamento (perdas por época)
-  - resumo.json     : início, fim, duração, estado, batch usado, LR encontrado, .emd
+  - resumo.json     : início, fim, duração, estado, batch usado, LR encontrado,
+                      LR da sondagem e LR usado, .emd
   - TensorBoard     : curvas de treino (dentro da pasta do modelo), se ativo
 E um resumo de todas as experiências em <PASTA_MODELOS>\\resumo_treinos.csv
 
-Executar na janela Python, num Notebook do ArcGIS Pro 3.6 ou na linha de comandos
-(arcgispro-py3).
+Executar de preferência na linha de comandos (arcgispro-py3). Na janela Python ou num
+Notebook do ArcGIS Pro, a sondagem do LR corre num processo python.exe separado
+(ver PYTHON_EXE).
 """
 import os
 # Antes de importar arcpy/PyTorch:
@@ -72,16 +76,25 @@ MTRE_ARGS = "gaussian_thresh 0.76;orient_bin_size 20;mtl_model linknet"
 # o LR Finder corre antes (processo separado, ~3 min) e o valor encontrado é
 # limitado a [mín, máx]; o treino usa esse valor como LR fixo.
 LR_LIMITES = (1e-4, 1e-3)
+# Python usado na sondagem: na janela Python do ArcGIS Pro, sys.executable é o
+# ArcGISPro.exe e não o python.exe do ambiente, por isso usa-se sys.exec_prefix.
+PYTHON_EXE = os.path.join(sys.exec_prefix, "python.exe")
+if not os.path.exists(PYTHON_EXE):
+    PYTHON_EXE = sys.executable
+# FREEZE_MODEL = só a cabeça do modelo é treinada (backbone ResNet-50 congelado);
+# UNFREEZE_MODEL = treina também o backbone (mais lento, útil em caso de subajuste).
+CONGELAR = "FREEZE_MODEL"
 SONDA_TIMEOUT_MIN = 15   # se a sondagem não terminar a tempo, segue com o LR automático
 PASTA_REDE_256 = os.path.join(TRAINING, "rede_viaria_chip256_unet_binario")  # binário, chips 256
 
 # Cada experiência: nome -> parâmetros. ativo=False para não correr.
 # epocas (opcional) sobrepõe-se a EPOCAS para essa experiência.
-# learning_rate=None -> taxa ótima estimada automaticamente (LR Finder).
+# learning_rate=None -> taxa estimada pelo LR Finder; com lr_limites, a estimativa é
+#   feita antes do treino (sondagem) e limitada a [mín, máx]; sem lr_limites, fica a
+#   cargo do Train Deep Learning Model.
 # batches: tentados por ordem; se faltar memória na GPU passa ao seguinte.
-# tensorboard (opcional, por defeito True).
+# tensorboard (opcional, por defeito True); freeze (opcional, por defeito CONGELAR).
 EXPERIENCIAS = {
-    # U-Net multiclasse: pavimentada / não pavimentada / ferrovia
     # U-Net binário: rede viária (mesmas etiquetas do Multi-Task Road Extractor)
     "unet_resnet50_rede_binario": dict(
         ativo=True,
@@ -95,7 +108,9 @@ EXPERIENCIAS = {
         tensorboard=False,
         tag="binario_lrlim",
     ),
-    # U-Net multiclasse: 3 tentativas sem aprender (LR auto ~5e-5; LR 2e-4 + focal loss)
+    # U-Net multiclasse: pavimentada / não pavimentada / ferrovia. Desativado: 3 tentativas
+    # sem aprender (1: LR automático ~5e-5; 2: LR 2e-4; 3: LR 2e-4 com focal loss).
+    # Os argumentos abaixo são os da tentativa 2.
     "unet_resnet50": dict(
         ativo=False,
         pasta=PASTA_MULTI,
@@ -261,7 +276,7 @@ def sondar_lr(p, batch):
     t0 = time.time()
     print(f"  sondagem do LR (até {SONDA_TIMEOUT_MIN} min)...", flush=True)
     try:
-        r = subprocess.run([sys.executable, "-c", SONDA, json.dumps(cfg)],
+        r = subprocess.run([PYTHON_EXE, "-c", SONDA, json.dumps(cfg)],
                            capture_output=True, text=True, encoding="utf-8", errors="replace",
                            timeout=SONDA_TIMEOUT_MIN * 60)
     except subprocess.TimeoutExpired:
@@ -293,6 +308,7 @@ def treinar(nome, p, ambiente):
     sufixo = "teste" if MODO_TESTE else "treino"
     tensorboard = "ENABLE_TENSORBOARD" if p.get("tensorboard", True) else "DISABLE_TENSORBOARD"
 
+    resumo = None
     for batch in p["batches"]:
         lr_sonda, lr_usado = None, p["learning_rate"]
         if p["learning_rate"] is None and p.get("lr_limites"):
@@ -300,6 +316,8 @@ def treinar(nome, p, ambiente):
             if lr_usado is None:
                 print("  a seguir com o LR automático do Train Deep Learning Model")
         tag = p.get("tag") or ("lrauto" if p["learning_rate"] is None else f"lr{p['learning_rate']:g}")
+        if p.get("lr_limites") and lr_usado is None:
+            tag += "_lrauto"   # a sondagem falhou: o nome da pasta indica o LR automático
         saida = os.path.join(PASTA_MODELOS, f"{nome}_b{batch}_{tag}_{sufixo}_{carimbo()}")
         registo = saida + "_registo"
         os.makedirs(registo, exist_ok=True)
@@ -322,6 +340,7 @@ def treinar(nome, p, ambiente):
             "lr_sonda": lr_sonda,
             "lr_limites": p.get("lr_limites"),
             "tensorboard": tensorboard,
+            "freeze": p.get("freeze", CONGELAR),
             "ambiente": ambiente,
         }
         with open(os.path.join(registo, "parametros.json"), "w", encoding="utf-8") as fh:
@@ -343,7 +362,7 @@ def treinar(nome, p, ambiente):
                 backbone_model=p["backbone_model"],
                 validation_percentage=VALIDACAO,
                 stop_training=paragem,
-                freeze="FREEZE_MODEL",
+                freeze=p.get("freeze", CONGELAR),
                 augmentation="DEFAULT",
                 chip_size=CHIP,
                 monitor=MONITOR,

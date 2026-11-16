@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-41b - Etiquetas binárias para o Multi-Task Road Extractor (modelo só binário).
+41b_Binario_RViaria.py - Etiquetas binárias (o Multi-Task Road Extractor só aceita
+duas classes; a da rede viária é usada também pelo U-Net binário).
 Parte das etiquetas multiclasse criadas pelo 41 e gera duas shapes:
 
   etiquetas_rede_viaria_binario.shp : Via pavimentada (1) + Via não pavimentada (2) -> 1

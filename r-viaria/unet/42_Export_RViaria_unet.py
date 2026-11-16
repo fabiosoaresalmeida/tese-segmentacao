@@ -33,7 +33,7 @@ arcpy.env.parallelProcessingFactor = PARALELO
 ORTO = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126.tif"          # ortomosaico das 16 ortos
 SHP = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP"
 TRAINING = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training"
-AREA_TREINO = os.path.join(SHP, "area_treino.shp")                     # criado pelo 40
+AREA_TREINO = os.path.join(SHP, "area_treino.shp")                     # criado pelo 40b
 
 CONJUNTOS = {
     # 3 classes: U-Net

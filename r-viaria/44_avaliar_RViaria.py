@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-44_v4 - Avaliação dos modelos da rede viária (Multi-Task Road Extractor e U-Net) com
-pós-processamento da vetorização. Cada ortofoto é avaliada em TRÊS versões,
-com as mesmas métricas, para medir o contributo do pós-processamento:
+44_avaliar_RViaria.py - Avaliação dos modelos da rede viária (Multi-Task Road
+Extractor e U-Net) com pós-processamento da vetorização. Cada ortofoto é avaliada
+em TRÊS versões, com as mesmas métricas, para medir o contributo do pós-processamento:
 
-  bruto      : máscara prevista -> Thin -> Raster to Polyline (como na v1)
+  bruto      : máscara prevista -> Thin -> Raster to Polyline (sem pós-processamento)
+  pos        : máscara prevista limpa (fase A) -> Thin -> Raster to Polyline
+               -> poda de esporões, travessas, alisamento e fecho de falhas (fase B)
   centerline : máscara limpa (fase A) -> polígonos -> Simplify Polygon
-               -> Polygon to Centerline -> fase B (como em Kramm et al., 2025)
-  pos   : máscara prevista limpa (fase A) -> Thin -> Raster to Polyline
-          -> poda de esporões, alisamento e fecho de falhas (fase B)
+               -> Polygon to Centerline -> Trim Line -> fase B (como em Kramm et al., 2025)
 
 Fase A, no raster (antes do Thin):
   A1 alisar a borda: média focal (JANELA_SUAVE x JANELA_SUAVE) e limiar 0,5
@@ -17,13 +17,14 @@ Fase A, no raster (antes do Thin):
   A3 remover manchas com área < AREA_MIN_M2
   A4 preencher buracos com área <= BURACO_MAX_M2 (carros, sombras)
 Fase B, no vetor:
-  B1 podar esporões < DANGLE_M (minimum_dangle_length do Raster to Polyline)
+  B1 podar esporões < DANGLE_M (pos: minimum_dangle_length do Raster to Polyline;
+     centerline: Trim Line)
   B1b remover travessas: troços curtos (<= TRAVESSA_MAX_M) entre dois nós, que
       saem com ângulo >= ANGULO_TRAVESSA de uma faixa contínua em cada ponta
       (ex.: ligações entre as duas faixas da autoestrada)
   B2 alisar linhas: Smooth Line PAEK com tolerância SUAVE_M
   B3 fechar falhas: Extend Line até EXTENDER_M (pontas soltas até outra linha)
-  B4 remover troços isolados < TROCO_MIN
+  B4 remover troços < TROCO_MIN (também aplicado à versão bruto)
 
 Para cada modelo, ortofoto e versão:
   - matriz de confusão por píxel (bruto: máscara prevista; pos/centerline: máscara limpa)
@@ -35,14 +36,15 @@ Para cada modelo, ortofoto e versão:
 
 Saídas:
   PASTA_AVAL/<modelo>/<folha>_classificado.tif   (inferência, partilhada entre corridas)
-  PASTA_AVAL/<modelo>/corrida_<data_hora>/       (uma pasta por corrida: sem bloqueios
-      <folha>_mascara_pos.tif, <folha>_eixos_bruto.shp,     de ficheiros abertos no
-      <folha>_eixos_pos.shp, <folha>_referencia.shp,        ArcGIS e corridas com
-      avaliacao.gdb (linhas brutas, travessas)              parâmetros diferentes
-                                                            ficam todas guardadas)
+  PASTA_AVAL/<modelo>/corrida_<data_hora>/       (uma pasta por corrida: evita bloqueios
+      <folha>_mascara_pos.tif                       de ficheiros abertos no ArcGIS, e as
+      <folha>_eixos_<versao>.shp (bruto, pos,       corridas com parâmetros diferentes
+          centerline)                               ficam todas guardadas)
+      <folha>_referencia.shp, <folha>_referencia_pol.shp
+      avaliacao.gdb (linhas brutas, polígonos, travessas, linhas alisadas e estendidas)
   PASTA_AVAL/parametros_<corrida>.json, matriz_confusao_<corrida>.csv,
-  metricas_eixos_<corrida>.csv, completeness_classes_<corrida>.csv
-  (CSV com a coluna 'versao')
+  pixel_tolerancia_<corrida>.csv, metricas_eixos_<corrida>.csv,
+  completeness_classes_<corrida>.csv (CSV com a coluna 'versao')
 
 Executar na linha de comandos (arcgispro-py3). Requer Image Analyst e Spatial Analyst;
 a versão 'centerline' requer a extensão do Polygon to Centerline (Topographic Production).
@@ -77,9 +79,9 @@ arcpy.env.gpuId = 0
 # CONFIGURAÇÃO
 # ---------------------------------------------------------------------------
 MODO_TESTE = False           # True = só ORTO_TESTE; False = as 3 ortos de teste
-ORTO_TESTE = "126-I-2"     # tem todas as classes, incluindo a ferrovia
+ORTO_TESTE = "126-I-2"       # tem todas as classes, incluindo a ferrovia
 
-MIN_GPU_LIVRE_GB = 6.0       # não arranca a inferência com menos memória livre na GPU
+MIN_GPU_LIVRE_GB = 6.0       # com REFAZER_INFERENCIA, não arranca com menos memória livre na GPU
 
 PASTA_ORTOS = r"D:\Users\Cap_Almeida\Projeto\M888_Ortos\126_Ortofotos"
 MAX_FRACAO_VIA = 0.30   # acima disto o raster classificado é suspeito: não vetorizar
@@ -111,13 +113,13 @@ MODELOS = {
 
 MARGEM_ESPELHO_M = 32.0  # metros de imagem espelhada à volta da orto (usar o mesmo dos edifícios)
 APAGAR_ESPELHO = True   # apagar a orto espelhada temporária depois da inferência
-# Argumentos de inferência: o padding é calculado por modelo (1/4 do chip do .emd,
-# máximo 128), porque tem de ser menor do que metade do chip (256 -> 64, 512 -> 128)
+# Argumentos de inferência: o padding é calculado por modelo como 1/4 do chip do .emd
+# (256 -> 64, 512 -> 128; máximo PADDING_MAX), porque tem de ser menor do que metade do chip
 BATCH_INFERENCIA = 2      # batch pequeno: a GPU pode estar partilhada com um treino
 PADDING_MAX = 128
 TOLERANCIAS = [2.0, 3.0, 5.0]   # metros; 3 m é o valor principal, 2 e 5 para sensibilidade
 ESPESSURA_MAX = 20.0            # metros: espessura máxima das manchas para o Thin
-TROCO_MIN = 10.0                # metros: remove esporões e troços isolados mais curtos
+TROCO_MIN = 10.0                # metros: remove todos os troços mais curtos (no fim)
 REFAZER_INFERENCIA = False      # True para repetir a inferência mesmo que o raster exista
 
 # Larguras da referência por píxel: as MESMAS do 41 (etiquetas de treino)
@@ -134,7 +136,7 @@ LARGURA = {
 DESVIO_EIXO = 0.75
 LARGURA_MIN = 1.0
 
-# ---- Pós-processamento (versão 'pos') -------------------------------------
+# ---- Vetorização e pós-processamento (versões 'pos' e 'centerline') -------
 VERSOES = ["bruto", "pos", "centerline"]
 SIMPLIFICAR_M = 1.0     # centerline: tolerância do Simplify Polygon (Point Remove)
 # Fase A (raster)
@@ -446,8 +448,6 @@ def fmt(x):
     return "" if x is None else f"{x:.4f}"
 
 
-
-
 def guardar(r, caminho):
     r.save(caminho)
     return caminho
@@ -686,7 +686,7 @@ if livre is not None:
 log(f"Extensões para o Polygon to Centerline: {ESTADO_EXTENSOES}")
 linhas_m, linhas_c, linhas_p, linhas_t = [], [], [], []
 CAMPOS_TOL = ["precisao", "recall", "f1", "iou"]
-log(f"Avaliação v4 | corrida {CORRIDA} | modo teste: {MODO_TESTE} | ortos: {', '.join(FOLHAS)} "
+log(f"Avaliação 44 | corrida {CORRIDA} | modo teste: {MODO_TESTE} | ortos: {', '.join(FOLHAS)} "
     f"| versões: {VERSOES} | tolerâncias: {TOLERANCIAS} m")
 
 for nome, cfg in MODELOS.items():

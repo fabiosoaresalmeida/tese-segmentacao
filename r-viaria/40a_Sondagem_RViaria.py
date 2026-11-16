@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-40a - Sondagem da rede viária por ortofoto.
+40a_Sondagem_RViaria.py - Sondagem da rede viária por ortofoto.
 
-0. Projeta os eixos para o sistema de coordenadas das ortofotos (novo shapefile)
+0. Projeta os eixos (Datum Lisboa) para o sistema de coordenadas das ortofotos
+   -> l_vias_IGeoE.shp, usado depois pelo 41, 44, 45 e 46
 1. Cria um polígono por ortofoto (extensão de cada TIF) -> folhas_ortos.shp
 2. Mede o comprimento de eixos por classe em cada ortofoto -> sondagem_vias.csv
-3. Avalia todas as combinações de N ortos de teste e ordena-as pela
-   diversidade dos perfis viários, com restrições de representatividade.
+3. Avalia todas as combinações de N_TESTE ortos de teste e ordena-as pela
+   diversidade dos perfis viários (soma das distâncias entre os perfis normalizados),
+   com restrições de representatividade (MAX_TESTE). Mostra também a posição da
+   combinação usada nos edifícios e da escolhida para as vias.
 
 Executar na janela Python ou num Notebook do ArcGIS Pro 3.6.
 """
@@ -27,18 +30,18 @@ EIXOS = r"D:\Users\Cap_Almeida\Projeto\M888_SHP\126_2018_4\l_vias.shp"    # orig
 CAMPO_SOURCE = "source"
 PASTA_SAIDA = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP"
 
-# Eixos projetados para o sistema das ortofotos (usar este shapefile também no 41)
+# Eixos projetados para o sistema das ortofotos (usado pelo 41, 44, 45 e 46)
 EIXOS_PROJ = os.path.join(PASTA_SAIDA, "l_vias_IGeoE.shp")
 # Transformação de datum Lisboa -> WGS84: a mesma que o mapa usa
 # (Map Properties > Transformation). Se ficar None e os sistemas forem
 # diferentes, o script para e lista as transformações possíveis.
-TRANSFORMACAO = "Lisbon_Lisbon_To_WGS_1984_2"   # ex.: "Lisbon_Lisbon_To_Lisbon + Lisbon_To_WGS_1984_4"
+TRANSFORMACAO = "Lisbon_Lisbon_To_WGS_1984_2"
 
 ATUAL = ["126-I-3", "126-II-3", "126-IV-1"]   # teste dos edifícios (nomes = nome do TIF)
 ESCOLHIDA = ["126-I-2", "126-III-4", "126-IV-1"]   # teste escolhido para as vias
 N_TESTE = 3
-MAX_TESTE = 0.35     # fração máxima de cada classe de treino que pode ir para teste
-TOP = 10
+MAX_TESTE = 0.35     # fração máxima de cada classe (pavimentada, não pavimentada) em teste
+TOP = 10             # número de combinações mostradas
 
 CLASSE = {
     "Auto_estrada": 1,

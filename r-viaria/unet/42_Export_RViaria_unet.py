@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+42_Export_RViaria_unet.py
 Export Training Data For Deep Learning - rede viária (Classified Tiles).
 Conjuntos:
   - multiclasse:     Via pavimentada / Via não pavimentada / Ferrovia (U-Net), chips 256
+                     (já exportado; o U-Net multiclasse não chegou a aprender)
   - rede_viaria_256: binário, via pavimentada + não pavimentada (U-Net), chips 256
 Corre só no CPU (a GPU fica livre para os treinos).
 Executar na linha de comandos (arcgispro-py3), na janela Python ou num Notebook do
@@ -19,7 +21,8 @@ arcpy.CheckOutExtension("ImageAnalyst")
 arcpy.env.overwriteOutput = True
 arcpy.env.processorType = "CPU"
 # "0" = sem processos paralelos: funciona mesmo quando o arranque de novos python.exe
-# está bloqueado (a exportação com 50 % ficou presa a 0 %). Mais lento (1–3 h).
+# está bloqueado (a exportação com 50 % ficou presa a 0 %). Mais lento: a exportação
+# rede_viaria_256 demorou cerca de 5 h.
 # Com o Python a arrancar normalmente, "50%" é mais rápido e deixa núcleos ao treino.
 PARALELO = "0"
 arcpy.env.parallelProcessingFactor = PARALELO

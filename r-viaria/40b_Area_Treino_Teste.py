@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Áreas de treino e teste da rede viária.
-Usa folhas_ortos.shp (criado pelo 40a) e as ortofotos de teste escolhidas.
+40b_Area_Treino_Teste.py - Áreas de treino e teste da rede viária.
+Usa folhas_ortos.shp (criado pelo 40a) e as ortofotos de teste escolhidas no 40a.
+Saídas: area_teste.shp (as ortos de teste) e area_treino.shp (as restantes, sem a
+sobreposição com o teste), usada como máscara na exportação (42) e no recorte das
+etiquetas (41).
 Executar na janela Python ou num Notebook do ArcGIS Pro 3.6.
 """
 import os
@@ -14,7 +17,7 @@ arcpy.env.overwriteOutput = True
 # ---------------------------------------------------------------------------
 PASTA_SAIDA = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP"
 FOLHAS = os.path.join(PASTA_SAIDA, "folhas_ortos.shp")
-TESTE = ["126-I-2", "126-III-4", "126-IV-1"]   # substituir pela escolha feita no 39
+TESTE = ["126-I-2", "126-III-4", "126-IV-1"]   # combinação escolhida no 40a (ESCOLHIDA)
 
 
 # ---------------------------------------------------------------------------

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-43_Treino_RViaria.py
-Train Deep Learning Model - rede viária.
-Três modelos, todos com ResNet-50 e learning rate automático:
-  - U-Net multiclasse (pavimentada / não pavimentada / ferrovia)
-  - Multi-Task Road Extractor binário: rede viária
-  - Multi-Task Road Extractor binário: ferrovia
-Cada um lê a sua exportação. Escolher os que correm com ativo=True.
+MTRE/43_Treino_RViaria.py
+Train Deep Learning Model - Multi-Task Road Extractor (linknet), ResNet-50, chips 512,
+learning rate automático (LR Finder). Dois modelos binários, cada um com a sua
+exportação (MTRE/42):
+  - rede viária (pavimentada + não pavimentada)
+  - ferrovia
+O U-Net é treinado pelos scripts da pasta unet/.
 
 MODO_TESTE = True  -> 1 época por modelo, sem paragem automática, para validar
                       o fluxo, o LR encontrado, a memória da GPU e o tempo por época.
@@ -44,14 +44,13 @@ arcpy.env.gpuId = 0
 MODO_TESTE = False       # True = 1 época por modelo; False = treino real
 
 TRAINING = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training"
-PASTA_MULTI = os.path.join(TRAINING, "vias_chip256_unet")              # 3 classes (U-Net)
-#PASTA_REDE = os.path.join(TRAINING, "rede_viaria_chip512_binario")        # binário
-#PASTA_FERRO = os.path.join(TRAINING, "ferrovia_chip512_binario")          # binário
-PASTA_MODELOS = r"D:\DL\Modelos\126_RViaria_Resnet50"
+PASTA_REDE = os.path.join(TRAINING, "rede_viaria_chip512_binario")     # binário
+PASTA_FERRO = os.path.join(TRAINING, "ferrovia_chip512_binario")       # binário
+PASTA_MODELOS = r"D:\DL\Modelos\126_RViaria"
 
 EPOCAS = 50
 VALIDACAO = 10          # % de validação, como no baseline dos edifícios
-CHIP = 256
+CHIP = 512
 PARAGEM = "STOP_TRAINING"   # paragem automática quando a perda de validação estagna
 MONITOR = "VALID_LOSS"
 
@@ -62,37 +61,29 @@ MTRE_ARGS = "gaussian_thresh 0.76;orient_bin_size 20;mtl_model linknet"
 # learning_rate=None -> taxa ótima estimada automaticamente (LR Finder).
 # batches: tentados por ordem; se faltar memória na GPU passa ao seguinte.
 EXPERIENCIAS = {
-    # U-Net multiclasse: pavimentada / não pavimentada / ferrovia
-    "unet_resnet50": dict(
+    # Multi-Task Road Extractor binário: rede viária (pavimentada + não pavimentada)
+    # -> mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137
+    "mtre_rede_viaria_resnet50": dict(
         ativo=True,
-        pasta=PASTA_MULTI,
-        model_type="UNET",
+        pasta=PASTA_REDE,
+        model_type="MULTITASK_ROADEXTRACTOR",
         backbone_model="RESNET50",
-        arguments="class_balancing True",
+        arguments=MTRE_ARGS,
         learning_rate=None,
         batches=[8, 4],
     ),
-    # # Multi-Task Road Extractor binário: rede viária (pavimentada + não pavimentada)
-    # "mtre_rede_viaria_resnet50": dict(
-        # ativo=False,
-        # pasta=PASTA_REDE,
-        # model_type="MULTITASK_ROADEXTRACTOR",
-        # backbone_model="RESNET50",
-        # arguments=MTRE_ARGS,
-        # learning_rate=None,
-        # batches=[8, 4],
-    # ),
-    # # Multi-Task Road Extractor binário: ferrovia
-    # "mtre_ferrovia_resnet50": dict(
-        # ativo=False,
-        # epocas=100,   # poucos chips (~34 batches/época): mais épocas para atualizações suficientes
-        # pasta=PASTA_FERRO,
-        # model_type="MULTITASK_ROADEXTRACTOR",
-        # backbone_model="RESNET50",
-        # arguments=MTRE_ARGS,
-        # learning_rate=None,
-        # batches=[8, 4],
-    # ),
+    # Multi-Task Road Extractor binário: ferrovia
+    # -> mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209
+    "mtre_ferrovia_resnet50": dict(
+        ativo=True,
+        epocas=100,   # poucos chips (~34 batches/época): mais épocas para atualizações suficientes
+        pasta=PASTA_FERRO,
+        model_type="MULTITASK_ROADEXTRACTOR",
+        backbone_model="RESNET50",
+        arguments=MTRE_ARGS,
+        learning_rate=None,
+        batches=[8, 4],
+    ),
 }
 
 ERROS_MEMORIA = ("out of memory", "cuda error", "cudnn_status_alloc_failed")

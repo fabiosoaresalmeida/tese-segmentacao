@@ -48,7 +48,7 @@ import arcpy
 
 # =============================== PARÂMETROS ===============================
 CHIPS = r"D:\Users\Cap_Almeida\Projeto\126\126_OcupacaoSolo\33_Training_nDSM\chips_ocupacao_256_128"
-PASTA_MODELOS = r"D:\DL\Modelos\126_ocupacao_nDSM"   # (pasta renomeada depois do treino)
+PASTA_MODELOS = r"D:\DL\Modelos\126_ocupacao_nDSM"
 
 IGNORE = 8
 CHIP_SIZE = 256

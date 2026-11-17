@@ -221,8 +221,11 @@ def bandas_do_modelo(modelo):
 
 
 def assinatura(modelo, args):
-    """O que define uma classificacao: modelo (caminho e data), argumentos e ortomosaico."""
-    return {"modelo": os.path.abspath(modelo),
+    """O que define uma classificacao: modelo (pasta, ficheiro e data), argumentos e ortomosaico."""
+    # o modelo e identificado pela sua pasta, nome do ficheiro e data (e nao pelo caminho
+    # completo), para que mudar o nome das pastas de cima nao obrigue a classificar de novo
+    return {"modelo": os.path.join(os.path.basename(os.path.dirname(os.path.abspath(modelo))),
+                                   os.path.basename(modelo)),
             "modelo_data": round(os.path.getmtime(modelo), 0),
             "argumentos": args,
             "ortomosaico": os.path.abspath(ORTOMOSAICO)}

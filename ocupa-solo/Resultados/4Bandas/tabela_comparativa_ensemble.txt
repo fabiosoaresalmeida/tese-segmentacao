@@ -1,0 +1,37 @@
+ENSEMBLE DOS MODELOS DE OCUPACAO DO SOLO - total das ortos de teste
+Data: 2026-11-13 13:53 | modelos (prioridade): ['samlora_v1', 'deeplabv3_r50_v2', 'unet_r50_v2', 'pspnet_r50_v2']
+especialista: base samlora_v1, classes [3, 5], concordancia minima 2
+
+AGRUPAMENTO: completa  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |      Vinha Pomar_vin     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+--------------------------------------------------------------------------------------------------------------------------------------------
+ens_maioria_especiali   0.792  0.739  0.573  0.670  0.702 |      0.892     0.694     0.398     0.797     0.396     0.715     0.951     0.773
+ens_maioria             0.795  0.742  0.563  0.672  0.687 |      0.893     0.696     0.291     0.796     0.369     0.717     0.951     0.782
+ens_especialista        0.770  0.710  0.562  0.649  0.692 |      0.880     0.664     0.396     0.784     0.394     0.710     0.966     0.747
+ens_ponderado           0.793  0.738  0.553  0.663  0.680 |      0.887     0.696     0.291     0.790     0.351     0.715     0.931     0.774
+samlora_v1              0.775  0.715  0.538  0.650  0.656 |      0.880     0.665     0.185     0.780     0.299     0.711     0.966     0.762
+deeplabv3_r50_v2        0.766  0.706  0.524  0.633  0.648 |      0.863     0.673     0.225     0.787     0.263     0.703     0.933     0.738
+unet_r50_v2             0.740  0.679  0.518  0.611  0.652 |      0.862     0.628     0.320     0.762     0.334     0.660     0.934     0.713
+pspnet_r50_v2           0.723  0.660  0.499  0.586  0.640 |      0.854     0.639     0.308     0.768     0.381     0.639     0.882     0.645
+
+AGRUPAMENTO: generalizada  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |  Vinha+Pom     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+----------------------------------------------------------------------------------------------------------------------------------
+ens_maioria_especiali   0.827  0.761  0.586  0.721  0.707 |      0.921     0.398     0.797     0.396     0.715     0.951     0.773
+ens_especialista        0.806  0.735  0.580  0.705  0.701 |      0.915     0.396     0.784     0.394     0.710     0.966     0.747
+ens_maioria             0.830  0.765  0.574  0.722  0.690 |      0.922     0.291     0.796     0.369     0.717     0.951     0.782
+ens_ponderado           0.828  0.761  0.564  0.715  0.682 |      0.919     0.291     0.790     0.351     0.715     0.931     0.774
+samlora_v1              0.812  0.740  0.552  0.706  0.660 |      0.915     0.185     0.780     0.299     0.711     0.966     0.762
+unet_r50_v2             0.790  0.712  0.537  0.675  0.661 |      0.907     0.320     0.762     0.334     0.660     0.934     0.713
+deeplabv3_r50_v2        0.807  0.733  0.537  0.690  0.651 |      0.906     0.225     0.787     0.263     0.703     0.933     0.738
+pspnet_r50_v2           0.770  0.687  0.513  0.646  0.646 |      0.898     0.308     0.768     0.381     0.639     0.882     0.645
+
+ens_maioria: 1 voto por modelo (desempate pela prioridade). ens_ponderado: voto = F1 de validacao do modelo nessa classe. ens_especialista: modelo base, substituido nas classes dificeis quando um especialista as preve e ha concordancia minima. ens_maioria_especialista: maioria + a mesma regra nas classes dificeis.
+
+CONCORDANCIA ENTRE MODELOS (total das ortos) - exatidao global em cada nivel
+concordam     % pixeis  % acum. |            ens_maioria  ens_maioria_especial            samlora_v1
+4 de 4            61.8     61.8 |                  0.913                 0.913                 0.913
+3 de 4            22.5     84.2 |                  0.681                 0.681                 0.589
+2 de 4            15.0     99.3 |                  0.502                 0.482                 0.509
+1 de 4             0.7    100.0 |                  0.313                 0.313                 0.313
+% acum.: pixeis com pelo menos esse n.o de modelos de acordo. Ver concordancia_ensemble.csv para os valores por orto e a exatidao acumulada.

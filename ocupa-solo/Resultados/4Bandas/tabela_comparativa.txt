@@ -1,0 +1,20 @@
+AVALIACAO DOS MODELOS DE OCUPACAO DO SOLO - total das ortos de teste
+Data: 2026-11-13 09:19 | referencia: D:\Users\Cap_Almeida\Projeto\126\126_OcupacaoSolo\32_separacao_unet\rotulos_teste.shp
+
+AGRUPAMENTO: completa  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |      Vinha Pomar_vin     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+--------------------------------------------------------------------------------------------------------------------------------------------
+samlora_v1              0.775  0.715  0.538  0.650  0.656 |      0.880     0.665     0.185     0.780     0.299     0.711     0.966     0.762
+deeplabv3_r50_v2        0.766  0.706  0.524  0.633  0.648 |      0.863     0.673     0.225     0.787     0.263     0.703     0.933     0.738
+unet_r50_v2             0.740  0.679  0.518  0.611  0.652 |      0.862     0.628     0.320     0.762     0.334     0.660     0.934     0.713
+pspnet_r50_v2           0.723  0.660  0.499  0.586  0.640 |      0.854     0.639     0.308     0.768     0.381     0.639     0.882     0.645
+
+AGRUPAMENTO: generalizada  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |  Vinha+Pom     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+----------------------------------------------------------------------------------------------------------------------------------
+samlora_v1              0.812  0.740  0.552  0.706  0.660 |      0.915     0.185     0.780     0.299     0.711     0.966     0.762
+unet_r50_v2             0.790  0.712  0.537  0.675  0.661 |      0.907     0.320     0.762     0.334     0.660     0.934     0.713
+deeplabv3_r50_v2        0.807  0.733  0.537  0.690  0.651 |      0.906     0.225     0.787     0.263     0.703     0.933     0.738
+pspnet_r50_v2           0.770  0.687  0.513  0.646  0.646 |      0.898     0.308     0.768     0.381     0.639     0.882     0.645
+
+OA: exatidao global. kappa: coeficiente kappa. mIoU: IoU medio das classes. fwIoU: IoU ponderado pela area de cada classe. F1mac: F1 medio das classes. Excluidos da avaliacao: pixeis da referencia com [0, 8] e fora da zona de teste.

@@ -1,0 +1,59 @@
+[2026-11-16 10:43:49] ============================================================
+[2026-11-16 10:43:49] Avaliacao iniciada | modo_teste=False | forcar_cpu=False | modelos=['deeplabv3_r50_ndsm', 'samlora_ndsm']
+[2026-11-16 10:43:50] GPU: 15.6 GB livres -> GPU (verificado antes de cada orto)
+[2026-11-16 10:43:50]    a recortar 126-I-3 com 256 m de contexto
+[2026-11-16 10:44:26]    126-I-3: 37,269,610 pixeis avaliados | excluidos: 2,730,389 Ignorar/residuais, 1 sem referencia
+[2026-11-16 10:44:26]    a recortar 126-II-4 com 256 m de contexto
+[2026-11-16 10:45:00]    126-II-4: 38,060,131 pixeis avaliados | excluidos: 1,939,868 Ignorar/residuais, 1 sem referencia
+[2026-11-16 10:45:00]    a recortar 126-IV-3 com 256 m de contexto
+[2026-11-16 10:45:49]       bordas espelhadas: esquerda 512 px
+[2026-11-16 10:45:57]    126-IV-3: 38,271,455 pixeis avaliados | excluidos: 1,728,544 Ignorar/residuais, 1 sem referencia
+[2026-11-16 10:45:57] MODELO deeplabv3_r50_ndsm | D:\DL\Modelos\126_ocupacao_nDSM\deeplabv3_r50\deeplabv3_r50.emd | mapa das previsoes: nenhum | padding 64;batch_size 4;predict_background False;test_time_augmentation True
+[2026-11-16 10:45:57]    bandas: modelo 5 | orto de teste 5
+[2026-11-16 10:45:57]       processador: GPU (GPU com 15.6 GB livres; minimo para usar a GPU: 12 GB)
+[2026-11-16 10:55:05]    126-I-3: classificacao em 9.1 min (GPU)
+[2026-11-16 10:55:06]    126-I-3 | completa: OA=0.850 kappa=0.753 mIoU=0.483 F1macro=0.583
+[2026-11-16 10:55:06]    126-I-3 | generalizada: OA=0.877 kappa=0.781 mIoU=0.516 F1macro=0.607
+[2026-11-16 10:55:06]       processador: GPU (GPU com 15.6 GB livres; minimo para usar a GPU: 12 GB)
+[2026-11-16 11:02:37]    126-II-4: classificacao em 7.5 min (GPU)
+[2026-11-16 11:02:38]    126-II-4 | completa: OA=0.735 kappa=0.666 mIoU=0.543 F1macro=0.668
+[2026-11-16 11:02:38]    126-II-4 | generalizada: OA=0.817 kappa=0.709 mIoU=0.565 F1macro=0.676
+[2026-11-16 11:02:38]       processador: GPU (GPU com 15.6 GB livres; minimo para usar a GPU: 12 GB)
+[2026-11-16 11:10:12]    126-IV-3: classificacao em 7.6 min (GPU)
+[2026-11-16 11:10:14]    126-IV-3 | completa: OA=0.713 kappa=0.617 mIoU=0.394 F1macro=0.518
+[2026-11-16 11:10:14]    126-IV-3 | generalizada: OA=0.719 kappa=0.623 mIoU=0.446 F1macro=0.583
+[2026-11-16 11:10:14]    TOTAL deeplabv3_r50_ndsm | completa: OA=0.766 kappa=0.707 mIoU=0.521 fwIoU=0.640 F1macro=0.642
+[2026-11-16 11:10:14]    TOTAL deeplabv3_r50_ndsm | generalizada: OA=0.804 kappa=0.731 mIoU=0.532 fwIoU=0.694 F1macro=0.643
+[2026-11-16 11:10:14] MODELO samlora_ndsm | D:\DL\Modelos\126_ocupacao_nDSM\samlora\samlora.emd | mapa das previsoes: nenhum | padding 64;batch_size 4;predict_background False;test_time_augmentation True
+[2026-11-16 11:10:14]    bandas: modelo 5 | orto de teste 5
+[2026-11-16 11:10:14]       processador: GPU (GPU com 15.6 GB livres; minimo para usar a GPU: 12 GB)
+[2026-11-16 11:24:50]    126-I-3: classificacao em 14.6 min (GPU)
+[2026-11-16 11:24:51]    126-I-3 | completa: OA=0.866 kappa=0.774 mIoU=0.471 F1macro=0.557
+[2026-11-16 11:24:51]    126-I-3 | generalizada: OA=0.886 kappa=0.798 mIoU=0.512 F1macro=0.591
+[2026-11-16 11:24:51]       processador: GPU (GPU com 15.0 GB livres; minimo para usar a GPU: 12 GB)
+[2026-11-16 11:39:31]    126-II-4: classificacao em 14.7 min (GPU)
+[2026-11-16 11:39:32]    126-II-4 | completa: OA=0.733 kappa=0.663 mIoU=0.552 F1macro=0.680
+[2026-11-16 11:39:32]    126-II-4 | generalizada: OA=0.824 kappa=0.723 mIoU=0.585 F1macro=0.696
+[2026-11-16 11:39:32]       processador: GPU (GPU com 15.0 GB livres; minimo para usar a GPU: 12 GB)
+[2026-11-16 11:54:24]    126-IV-3: classificacao em 14.9 min (GPU)
+[2026-11-16 11:54:26]    126-IV-3 | completa: OA=0.769 kappa=0.672 mIoU=0.406 F1macro=0.516
+[2026-11-16 11:54:26]    126-IV-3 | generalizada: OA=0.770 kappa=0.674 mIoU=0.450 F1macro=0.564
+[2026-11-16 11:54:26]    TOTAL samlora_ndsm | completa: OA=0.789 kappa=0.731 mIoU=0.544 fwIoU=0.661 F1macro=0.660
+[2026-11-16 11:54:26]    TOTAL samlora_ndsm | generalizada: OA=0.826 kappa=0.760 mIoU=0.562 fwIoU=0.720 F1macro=0.666
+[2026-11-16 11:54:26] AVALIACAO DOS MODELOS DE OCUPACAO DO SOLO - total das ortos de teste
+Data: 2026-11-16 11:54 | referencia: D:\Users\Cap_Almeida\Projeto\126\126_OcupacaoSolo\32_separacao_unet\rotulos_teste.shp
+
+AGRUPAMENTO: completa  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |      Vinha Pomar_vin     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+--------------------------------------------------------------------------------------------------------------------------------------------
+samlora_ndsm            0.789  0.731  0.544  0.661  0.660 |      0.880     0.652     0.223     0.798     0.245     0.722     0.971     0.787
+deeplabv3_r50_ndsm      0.766  0.707  0.521  0.640  0.642 |      0.876     0.665     0.162     0.795     0.289     0.663     0.933     0.751
+
+AGRUPAMENTO: generalizada  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |  Vinha+Pom     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+----------------------------------------------------------------------------------------------------------------------------------
+samlora_ndsm            0.826  0.760  0.562  0.720  0.666 |      0.917     0.223     0.798     0.245     0.722     0.971     0.787
+deeplabv3_r50_ndsm      0.804  0.731  0.532  0.694  0.643 |      0.910     0.162     0.795     0.289     0.663     0.933     0.751
+
+OA: exatidao global. kappa: coeficiente kappa. mIoU: IoU medio das classes. fwIoU: IoU ponderado pela area de cada classe. F1mac: F1 medio das classes. Excluidos da avaliacao: pixeis da referencia com [0, 8] e fora da zona de teste.
+[2026-11-16 11:54:26] Avaliacao terminada

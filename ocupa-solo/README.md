@@ -184,9 +184,9 @@ F1 por classe (sem TTA):
 
 | Método | OA | Kappa | mIoU | F1 macro | F1 Pomar | F1 Arv. esparso |
 |---|---|---|---|---|---|---|
-| **Maioria + especialista** | 0,792 | 0,739 | **0,573** | **0,702** | 0,398 | 0,396 |
-| Maioria | **0,795** | **0,742** | 0,563 | 0,687 | 0,291 | 0,369 |
-| Especialista | 0,770 | 0,710 | 0,562 | 0,692 | 0,396 | 0,394 |
+| **Maioria + especialista** | 0,792 | 0,739 | **0,573** | **0,702** | 0,397 | 0,396 |
+| Especialista | 0,788 | 0,731 | 0,570 | 0,698 | 0,395 | 0,394 |
+| Maioria | **0,795** | **0,743** | 0,563 | 0,687 | 0,291 | 0,369 |
 | Ponderado | 0,793 | 0,738 | 0,553 | 0,680 | 0,291 | 0,351 |
 
 Concordância entre os 4 modelos (exatidão da maioria em cada nível):
@@ -196,9 +196,9 @@ Concordância entre os 4 modelos (exatidão da maioria em cada nível):
 | 4 de 4 | 61,8 | 0,913 |
 | 3 de 4 | 22,5 | 0,681 |
 | 2 de 4 | 15,0 | 0,502 |
-| 1 de 4 | 0,7 | 0,313 |
+| 1 de 4 | 0,7 | 0,352 |
 
-> Os valores do ensemble em `Resultados/4Bandas/` foram calculados antes da regra que impede votos nas classes 0 e 8 (17/11/2026). É preciso voltar a correr o `31_ensemble_ocupacao.py` para os atualizar; as diferenças esperadas são pequenas (≈ 0,2 % dos píxeis).
+> Valores de 17/11/2026, com a regra que impede votos nas classes 0 e 8. Face à versão anterior, só mudou o especialista (OA 0,770 → 0,788, mIoU 0,562 → 0,570), que deixou de manter as previsões de Ignorar do SAMLoRA; a maioria e a maioria + especialista ficaram praticamente iguais.
 
 ### Conclusões
 

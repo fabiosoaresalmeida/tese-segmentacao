@@ -136,3 +136,79 @@ concordam     % pixeis  % acum. |            ens_maioria  ens_maioria_especial  
 1 de 4             0.7    100.0 |                  0.313                 0.313                 0.313
 % acum.: pixeis com pelo menos esse n.o de modelos de acordo. Ver concordancia_ensemble.csv para os valores por orto e a exatidao acumulada.
 [2026-11-13 13:53:46] Ensemble terminado em 2.4 min
+[2026-11-17 11:25:45] ============================================================
+[2026-11-17 11:25:45] Ensemble iniciado | modelos (prioridade): ['samlora_v1', 'deeplabv3_r50_v2', 'unet_r50_v2', 'pspnet_r50_v2'] | metodos: ['maioria', 'ponderado', 'especialista', 'maioria_especialista']
+[2026-11-17 11:25:45] Especialista: base samlora_v1, classes {3: ['unet_r50_v2', 'pspnet_r50_v2'], 5: ['unet_r50_v2', 'pspnet_r50_v2']}, concordancia minima 2
+[2026-11-17 11:26:33]    126-I-3 | samlora_v1           OA=0.847 kappa=0.745 mIoU=0.450 F1macro=0.535
+[2026-11-17 11:26:34]    126-I-3 | deeplabv3_r50_v2     OA=0.844 kappa=0.744 mIoU=0.480 F1macro=0.583
+[2026-11-17 11:26:35]    126-I-3 | unet_r50_v2          OA=0.834 kappa=0.733 mIoU=0.465 F1macro=0.566
+[2026-11-17 11:26:36]    126-I-3 | pspnet_r50_v2        OA=0.821 kappa=0.712 mIoU=0.434 F1macro=0.538
+[2026-11-17 11:26:37]    126-I-3 | ens_maioria          OA=0.878 kappa=0.795 mIoU=0.511 F1macro=0.610
+[2026-11-17 11:26:38]    126-I-3 | ens_ponderado        OA=0.876 kappa=0.791 mIoU=0.498 F1macro=0.598
+[2026-11-17 11:26:39]    126-I-3 | ens_especialista     OA=0.870 kappa=0.782 mIoU=0.492 F1macro=0.587
+[2026-11-17 11:26:40]    126-I-3 | ens_maioria_especialista OA=0.877 kappa=0.793 mIoU=0.507 F1macro=0.606
+[2026-11-17 11:26:49]    126-I-3: concordancia -> 4 modelos: 72.1% dos pixeis (OA maioria 0.956) | 3 modelos: 18.3% dos pixeis (OA maioria 0.754) | 2 modelos: 9.2% dos pixeis (OA maioria 0.540) | 1 modelos: 0.4% dos pixeis (OA maioria 0.290) | 65 s
+[2026-11-17 11:27:36]    126-II-4 | samlora_v1           OA=0.728 kappa=0.658 mIoU=0.545 F1macro=0.672
+[2026-11-17 11:27:37]    126-II-4 | deeplabv3_r50_v2     OA=0.751 kappa=0.684 mIoU=0.562 F1macro=0.686
+[2026-11-17 11:27:38]    126-II-4 | unet_r50_v2          OA=0.718 kappa=0.645 mIoU=0.546 F1macro=0.686
+[2026-11-17 11:27:39]    126-II-4 | pspnet_r50_v2        OA=0.705 kappa=0.630 mIoU=0.528 F1macro=0.672
+[2026-11-17 11:27:40]    126-II-4 | ens_maioria          OA=0.760 kappa=0.695 mIoU=0.576 F1macro=0.704
+[2026-11-17 11:27:41]    126-II-4 | ens_ponderado        OA=0.756 kappa=0.691 mIoU=0.565 F1macro=0.694
+[2026-11-17 11:27:42]    126-II-4 | ens_especialista     OA=0.743 kappa=0.676 mIoU=0.577 F1macro=0.712
+[2026-11-17 11:27:43]    126-II-4 | ens_maioria_especialista OA=0.759 kappa=0.696 mIoU=0.592 F1macro=0.726
+[2026-11-17 11:27:52]    126-II-4: concordancia -> 4 modelos: 59.7% dos pixeis (OA maioria 0.888) | 3 modelos: 24.5% dos pixeis (OA maioria 0.632) | 2 modelos: 15.2% dos pixeis (OA maioria 0.479) | 1 modelos: 0.6% dos pixeis (OA maioria 0.298) | 63 s
+[2026-11-17 11:28:39]    126-IV-3 | samlora_v1           OA=0.752 kappa=0.656 mIoU=0.407 F1macro=0.519
+[2026-11-17 11:28:40]    126-IV-3 | deeplabv3_r50_v2     OA=0.704 kappa=0.601 mIoU=0.371 F1macro=0.493
+[2026-11-17 11:28:41]    126-IV-3 | unet_r50_v2          OA=0.670 kappa=0.572 mIoU=0.374 F1macro=0.502
+[2026-11-17 11:28:42]    126-IV-3 | pspnet_r50_v2        OA=0.644 kappa=0.543 mIoU=0.346 F1macro=0.469
+[2026-11-17 11:28:43]    126-IV-3 | ens_maioria          OA=0.750 kappa=0.662 mIoU=0.424 F1macro=0.546
+[2026-11-17 11:28:44]    126-IV-3 | ens_ponderado        OA=0.747 kappa=0.658 mIoU=0.414 F1macro=0.537
+[2026-11-17 11:28:45]    126-IV-3 | ens_especialista     OA=0.752 kappa=0.660 mIoU=0.418 F1macro=0.535
+[2026-11-17 11:28:46]    126-IV-3 | ens_maioria_especialista OA=0.743 kappa=0.655 mIoU=0.424 F1macro=0.548
+[2026-11-17 11:28:55]    126-IV-3: concordancia -> 4 modelos: 53.7% dos pixeis (OA maioria 0.887) | 3 modelos: 24.6% dos pixeis (OA maioria 0.677) | 2 modelos: 20.4% dos pixeis (OA maioria 0.502) | 1 modelos: 1.2% dos pixeis (OA maioria 0.396) | 63 s
+[2026-11-17 11:28:55]    TOTAL samlora_v1           OA=0.775 kappa=0.715 mIoU=0.538 fwIoU=0.650 F1macro=0.656
+[2026-11-17 11:28:55]    TOTAL deeplabv3_r50_v2     OA=0.766 kappa=0.706 mIoU=0.524 fwIoU=0.633 F1macro=0.648
+[2026-11-17 11:28:55]    TOTAL unet_r50_v2          OA=0.740 kappa=0.679 mIoU=0.518 fwIoU=0.611 F1macro=0.652
+[2026-11-17 11:28:55]    TOTAL pspnet_r50_v2        OA=0.723 kappa=0.660 mIoU=0.499 fwIoU=0.586 F1macro=0.640
+[2026-11-17 11:28:55]    TOTAL ens_maioria          OA=0.795 kappa=0.743 mIoU=0.563 fwIoU=0.671 F1macro=0.687
+[2026-11-17 11:28:55]    TOTAL ens_ponderado        OA=0.793 kappa=0.738 mIoU=0.553 fwIoU=0.663 F1macro=0.680
+[2026-11-17 11:28:55]    TOTAL ens_especialista     OA=0.788 kappa=0.731 mIoU=0.570 fwIoU=0.662 F1macro=0.698
+[2026-11-17 11:28:55]    TOTAL ens_maioria_especialista OA=0.792 kappa=0.739 mIoU=0.573 fwIoU=0.669 F1macro=0.702
+[2026-11-17 11:28:55] ENSEMBLE DOS MODELOS DE OCUPACAO DO SOLO - total das ortos de teste
+Data: 2026-11-17 11:28 | modelos (prioridade): ['samlora_v1', 'deeplabv3_r50_v2', 'unet_r50_v2', 'pspnet_r50_v2']
+especialista: base samlora_v1, classes [3, 5], concordancia minima 2
+
+AGRUPAMENTO: completa  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |      Vinha Pomar_vin     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+--------------------------------------------------------------------------------------------------------------------------------------------
+ens_maioria_especiali   0.792  0.739  0.573  0.669  0.702 |      0.891     0.694     0.397     0.797     0.396     0.715     0.951     0.773
+ens_especialista        0.788  0.731  0.570  0.662  0.698 |      0.882     0.667     0.395     0.783     0.394     0.710     0.972     0.782
+ens_maioria             0.795  0.743  0.563  0.671  0.687 |      0.892     0.696     0.291     0.796     0.369     0.717     0.951     0.782
+ens_ponderado           0.793  0.738  0.553  0.663  0.680 |      0.887     0.696     0.291     0.790     0.351     0.715     0.931     0.774
+samlora_v1              0.775  0.715  0.538  0.650  0.656 |      0.880     0.665     0.185     0.780     0.299     0.711     0.966     0.762
+deeplabv3_r50_v2        0.766  0.706  0.524  0.633  0.648 |      0.863     0.673     0.225     0.787     0.263     0.703     0.933     0.738
+unet_r50_v2             0.740  0.679  0.518  0.611  0.652 |      0.862     0.628     0.320     0.762     0.334     0.660     0.934     0.713
+pspnet_r50_v2           0.723  0.660  0.499  0.586  0.640 |      0.854     0.639     0.308     0.768     0.381     0.639     0.882     0.645
+
+AGRUPAMENTO: generalizada  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |  Vinha+Pom     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+----------------------------------------------------------------------------------------------------------------------------------
+ens_especialista        0.824  0.758  0.589  0.718  0.708 |      0.917     0.395     0.783     0.394     0.710     0.972     0.782
+ens_maioria_especiali   0.827  0.762  0.586  0.720  0.707 |      0.921     0.397     0.797     0.396     0.715     0.951     0.773
+ens_maioria             0.830  0.765  0.574  0.722  0.689 |      0.921     0.291     0.796     0.369     0.717     0.951     0.782
+ens_ponderado           0.828  0.761  0.564  0.715  0.682 |      0.919     0.291     0.790     0.351     0.715     0.931     0.774
+samlora_v1              0.812  0.740  0.552  0.706  0.660 |      0.915     0.185     0.780     0.299     0.711     0.966     0.762
+unet_r50_v2             0.790  0.712  0.537  0.675  0.661 |      0.907     0.320     0.762     0.334     0.660     0.934     0.713
+deeplabv3_r50_v2        0.807  0.733  0.537  0.690  0.651 |      0.906     0.225     0.787     0.263     0.703     0.933     0.738
+pspnet_r50_v2           0.770  0.687  0.513  0.646  0.646 |      0.898     0.308     0.768     0.381     0.639     0.882     0.645
+
+ens_maioria: 1 voto por modelo (desempate pela prioridade; 0 e 8 nao recebem votos). ens_ponderado: voto = F1 de validacao do modelo nessa classe. ens_especialista: modelo base, substituido nas classes dificeis quando um especialista as preve e ha concordancia minima. ens_maioria_especialista: maioria + a mesma regra nas classes dificeis.
+
+CONCORDANCIA ENTRE MODELOS (total das ortos) - exatidao global em cada nivel
+concordam     % pixeis  % acum. |            ens_maioria  ens_maioria_especial            samlora_v1
+4 de 4            61.8     61.8 |                  0.913                 0.913                 0.913
+3 de 4            22.5     84.2 |                  0.681                 0.681                 0.589
+2 de 4            15.0     99.3 |                  0.502                 0.482                 0.509
+1 de 4             0.7    100.0 |                  0.352                 0.352                 0.313
+% acum.: pixeis com pelo menos esse n.o de modelos de acordo. Ver concordancia_ensemble.csv para os valores por orto e a exatidao acumulada.
+[2026-11-17 11:28:55] Ensemble terminado em 3.2 min

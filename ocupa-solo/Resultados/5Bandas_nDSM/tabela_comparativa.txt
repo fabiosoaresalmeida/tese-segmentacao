@@ -1,0 +1,16 @@
+AVALIACAO DOS MODELOS DE OCUPACAO DO SOLO - total das ortos de teste
+Data: 2026-11-16 10:29 | referencia: D:\Users\Cap_Almeida\Projeto\126\126_OcupacaoSolo\32_separacao_unet\rotulos_teste.shp
+
+AGRUPAMENTO: completa  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |      Vinha Pomar_vin     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+--------------------------------------------------------------------------------------------------------------------------------------------
+samlora_ndsm            0.786  0.727  0.542  0.658  0.658 |      0.879     0.651     0.239     0.795     0.233     0.717     0.969     0.782
+deeplabv3_r50_ndsm      0.759  0.699  0.515  0.632  0.636 |      0.871     0.653     0.151     0.794     0.286     0.662     0.931     0.742
+
+AGRUPAMENTO: generalizada  (F1 por classe a direita)
+modelo                     OA  kappa   mIoU  fwIoU  F1mac |  Vinha+Pom     Pomar Arvoredo_ Arvoredo_ Mato_dens      Agua Sem_repre
+----------------------------------------------------------------------------------------------------------------------------------
+samlora_ndsm            0.823  0.755  0.559  0.716  0.664 |      0.915     0.239     0.795     0.233     0.717     0.969     0.782
+deeplabv3_r50_ndsm      0.799  0.724  0.527  0.688  0.639 |      0.906     0.151     0.794     0.286     0.662     0.931     0.742
+
+OA: exatidao global. kappa: coeficiente kappa. mIoU: IoU medio das classes. fwIoU: IoU ponderado pela area de cada classe. F1mac: F1 medio das classes. Excluidos da avaliacao: pixeis da referencia com [0, 8] e fora da zona de teste.

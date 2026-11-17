@@ -50,7 +50,7 @@ Saidas em PASTA_AVALIACAO:
 
 Correr no Python Command Prompt do ArcGIS Pro (com o ArcGIS Pro FECHADO e sem
 treinos a correr na GPU):
-    python "D:\Users\Cap_Almeida\Projeto\Python\20_avaliar_modelos.py"
+    python "D:\Users\Cap_Almeida\Projeto\Python\09_avaliar_modelos.py"
 """
 print("script iniciado, a carregar o arcpy...", flush=True)
 

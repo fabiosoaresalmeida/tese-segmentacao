@@ -1,19 +1,39 @@
 # -*- coding: utf-8 -*-
 """
-analisar_ortos.py  (ArcGIS Pro 3.6)
+05_analisar_ortos.py  (ArcGIS Pro 3.6)
 
-1) Para cada ortofoto da carta conta os edifícios (atribuídos pelo centróide),
-   a área edificada e a densidade.
-2) Divide os ortofotos em 3 estratos de densidade (disperso, misto, denso) e
-   sugere 3 ortofotos para TESTE - um de cada estrato - que juntos tenham
-   entre 10% e 20% dos edifícios.
+Análise das ortofotos da folha 126 (série M888) e sugestão das áreas de teste.
+
+1) Para cada ortofoto conta os edifícios (atribuídos pelo centróide),
+   a área edificada e a densidade de edifícios.
+2) Divide as ortofotos em 3 estratos de densidade (disperso, misto, denso),
+   pelos tercis da densidade, e sugere 3 ortofotos para TESTE - uma de cada
+   estrato - que, em conjunto, tenham entre PROP_MIN e PROP_MAX dos edifícios.
+
+Critério de escolha da combinação de teste (por esta ordem):
+  (1) proporção de edifícios dentro do intervalo PROP_MIN-PROP_MAX;
+  (2) pontuação = afastamento à proporção-alvo (PROP_ALVO)
+                  + representatividade (densidade próxima da mediana do estrato);
+  (3) preferência por ortofotos na margem da carta, segundo MODO_MARGEM:
+        "penalizacao" - cada ortofoto interior soma PESO_MARGEM à pontuação.
+                        A margem pesa na escolha, mesmo sem empate, mas uma
+                        combinação claramente melhor continua a prevalecer.
+                        Indicado quando se quer favorecer ativamente áreas de
+                        teste na periferia, com menos vizinhas de treino.
+        "desempate"   - a margem só é usada para desempatar combinações com a
+                        mesma pontuação (arredondada a CASAS_EMPATE casas
+                        decimais). Indicado quando a proporção e a
+                        representatividade devem ser os únicos critérios.
 
 Saídas:
-  <SAIDA_GRELHA>                      shapefile com os limites dos ortofotos e estatísticas
+  <SAIDA_GRELHA>                      shapefile com os limites das ortofotos e estatísticas
   <SAIDA_GRELHA>_relatorio.txt        relatório completo
   <SAIDA_GRELHA>_estatisticas.csv     tabela (abre no Excel, separador ;)
 
-Os edifícios em zonas de sobreposição entre ortofotos são atribuídos ao
+Atribuição dos edifícios: cada edifício é atribuído à ortofoto que contém o
+seu centróide. Na folha 126 as 16 ortofotos são contíguas e sem sobreposição;
+um centróide só pode cair em mais de uma ortofoto se estiver exatamente sobre
+um limite comum. Nesse caso (e em folhas com sobreposição) é atribuído à
 ortofoto cujo centro está mais próximo, para que cada edifício conte uma só vez.
 """
 import os
@@ -27,26 +47,36 @@ import traceback
 import arcpy
 
 # =============================== PARÂMETROS ===============================
-EDIFICIOS = r"D:\Users\Cap_Almeida\Projeto\126\126_Serta\SHP\a_constr_fil3.shp"
+# --- dados de entrada e saída (mesma raiz que os scripts 01 e 02)
+EDIFICIOS = r"D:\Users\Cap Almeida\Projeto\126\126_Serta\SHP\a_constr_fil3.shp"
 
-PASTA_ORTOS = r"D:\Users\Cap_Almeida\Projeto\M888_Ortos\126_Ortofotos"   # pasta com os 16 ortofotos
+PASTA_ORTOS = r"D:\Users\Cap Almeida\Projeto\M888_Ortos\126_Ortofotos"   # pasta com as 16 ortofotos
 EXTENSOES = (".tif", ".tiff", ".ecw", ".jp2", ".img")
-GRELHA_ORTOS = None        # alternativa: shapefile com os limites dos ortofotos
+GRELHA_ORTOS = None        # alternativa: shapefile com os limites das ortofotos
 CAMPO_NOME = "NOME"        # campo com o nome de cada ortofoto (só com GRELHA_ORTOS)
 
-SAIDA_GRELHA = r"D:\Users\Cap_Almeida\Projeto\126\126_Serta\Orto\ortos_grelha.shp"
+SAIDA_GRELHA = r"D:\Users\Cap Almeida\Projeto\126\126_Serta\Orto\ortos_grelha.shp"
 
-PROP_ALVO = 0.15           # proporção de edifícios pretendida no teste
-PROP_MIN, PROP_MAX = 0.10, 0.20
-MIN_EDIF_ORTO = 100        # ortofotos com menos edifícios não são sugeridos
+# --- proporção de edifícios no conjunto de teste
+PROP_ALVO = 0.15           # proporção pretendida
+PROP_MIN, PROP_MAX = 0.10, 0.20   # intervalo aceite
+
+# --- preferência por ortofotos na margem da carta (ver cabeçalho)
+MODO_MARGEM = "penalizacao"   # "penalizacao" ou "desempate"
+PESO_MARGEM = 0.1             # só "penalizacao": soma por cada ortofoto interior
+CASAS_EMPATE = 3              # só "desempate": casas decimais para considerar empate
+
+# --- outros
+MIN_EDIF_ORTO = 100        # ortofotos com menos edifícios não são sugeridas
 AREA_PEQUENO = 30.0        # m2; para a estatística "% edifícios pequenos"
-N_COMBINACOES = 5          # nº de combinações alternativas no relatório
+N_COMBINACOES = 5          # n.º de combinações alternativas no relatório
 ADICIONAR_AO_MAPA = True
 # ==========================================================================
 
 arcpy.env.overwriteOutput = True
 arcpy.env.addOutputsToMap = False
-TOL_MARGEM = 1.0           # m; tolerância para considerar um ortofoto na margem da carta
+TOL_MARGEM = 1.0           # m; tolerância para considerar uma ortofoto na margem da carta
+MODOS_MARGEM = ("penalizacao", "desempate")
 
 
 class Relatorio:
@@ -126,8 +156,21 @@ def ler_ortos(sr, rel):
     return ortos
 
 
+def texto_criterio_margem():
+    """Descrição do critério da margem, tal como é aplicado, para o relatório."""
+    if MODO_MARGEM == "penalizacao":
+        return (f"(4) preferência pela margem da carta: cada ortofoto interior soma "
+                f"{PESO_MARGEM:g} à pontuação (modo 'penalizacao').")
+    return (f"(4) desempate: entre combinações com a mesma pontuação (a {CASAS_EMPATE} "
+            "casas decimais), prefere-se a que tem mais ortofotos na margem da carta "
+            "(modo 'desempate').")
+
+
 def main(rel):
     t0 = time.time()
+    if MODO_MARGEM not in MODOS_MARGEM:
+        raise ValueError(f"MODO_MARGEM inválido: '{MODO_MARGEM}'. "
+                         f"Usa um de: {', '.join(MODOS_MARGEM)}.")
     desc = arcpy.Describe(EDIFICIOS)
     sr = desc.spatialReference
     arcpy.env.outputCoordinateSystem = sr
@@ -146,8 +189,11 @@ def main(rel):
     rel(f"ArcGIS Pro:  {arcpy.GetInstallInfo().get('Version', '?')}")
     rel()
     rel("PARÂMETROS")
-    for nome in ("EDIFICIOS", "PASTA_ORTOS", "GRELHA_ORTOS", "SAIDA_GRELHA", "PROP_ALVO",
-                 "PROP_MIN", "PROP_MAX", "MIN_EDIF_ORTO", "AREA_PEQUENO"):
+    nomes_param = ["EDIFICIOS", "PASTA_ORTOS", "GRELHA_ORTOS", "SAIDA_GRELHA", "PROP_ALVO",
+                   "PROP_MIN", "PROP_MAX", "MODO_MARGEM"]
+    nomes_param.append("PESO_MARGEM" if MODO_MARGEM == "penalizacao" else "CASAS_EMPATE")
+    nomes_param += ["MIN_EDIF_ORTO", "AREA_PEQUENO"]
+    for nome in nomes_param:
         rel(f"  {nome:<14} = {globals()[nome]}")
     rel(f"  Sistema de coordenadas: {sr.name}")
     rel()
@@ -155,7 +201,7 @@ def main(rel):
     # --- ortofotos
     ortos = ler_ortos(sr, rel)
     if len(ortos) < 3:
-        raise ValueError(f"Encontrados só {len(ortos)} ortofotos - verifica PASTA_ORTOS.")
+        raise ValueError(f"Encontradas só {len(ortos)} ortofotos - verifica PASTA_ORTOS.")
     for o in ortos:
         e = o["geom"].extent
         o.update(bbox=(e.XMin, e.YMin, e.XMax, e.YMax),
@@ -169,7 +215,7 @@ def main(rel):
         x0, y0, x1, y1 = o["bbox"]
         o["margem"] = int(abs(x0 - gx0) <= TOL_MARGEM or abs(y0 - gy0) <= TOL_MARGEM or
                           abs(x1 - gx1) <= TOL_MARGEM or abs(y1 - gy1) <= TOL_MARGEM)
-    rel(f"Ortofotos encontrados: {len(ortos)}")
+    rel(f"Ortofotos encontradas: {len(ortos)}")
     rel()
 
     # --- atribuição dos edifícios pelo centróide
@@ -224,16 +270,28 @@ def main(rel):
         estratos[nm].append(o)
     med = {nm: statistics.median([o["dens"] for o in L]) for nm, L in estratos.items()}
 
-    # --- combinações (um ortofoto de cada estrato)
+    # --- combinações (uma ortofoto de cada estrato)
+    # pontuação base: afastamento à proporção-alvo (normalizado pela largura do
+    # intervalo aceite) + representatividade (desvio logarítmico médio da
+    # densidade de cada ortofoto em relação à mediana do seu estrato; 0 = ideal)
     combos = []
     for trio in itertools.product(estratos["disperso"], estratos["misto"], estratos["denso"]):
         prop = sum(o["n"] for o in trio) / n_atrib
         rep = statistics.mean(abs(math.log(o["dens"] / med[o["estrato"]])) for o in trio)
         interiores = sum(1 for o in trio if not o["margem"])
-        pontuacao = abs(prop - PROP_ALVO) / (PROP_MAX - PROP_MIN) + rep + 0.1 * interiores
+        pontuacao = abs(prop - PROP_ALVO) / (PROP_MAX - PROP_MIN) + rep
+        if MODO_MARGEM == "penalizacao":
+            pontuacao += PESO_MARGEM * interiores   # a margem entra na pontuação
         dentro = PROP_MIN <= prop <= PROP_MAX
         combos.append((not dentro, pontuacao, prop, rep, interiores, trio))
-    combos.sort(key=lambda x: (x[0], x[1]))
+
+    # ordenação: primeiro as combinações dentro do intervalo, depois a pontuação;
+    # no modo "desempate", o n.º de ortofotos interiores só decide entre
+    # combinações com a mesma pontuação arredondada
+    if MODO_MARGEM == "penalizacao":
+        combos.sort(key=lambda x: (x[0], x[1]))
+    else:
+        combos.sort(key=lambda x: (x[0], round(x[1], CASAS_EMPATE), x[4]))
     sugerido = combos[0][5]
     for o in sugerido:
         o["sugerido"] = 1
@@ -280,10 +338,10 @@ def main(rel):
     # --- relatório
     rel("RESUMO DOS EDIFÍCIOS")
     rel(f"  Edifícios lidos:                    {n_total}")
-    rel(f"  Atribuídos a um ortofoto:           {n_atrib}")
-    rel(f"  Fora de todos os ortofotos:         {n_fora}")
-    rel(f"  Em zona de sobreposição de ortos:   {n_sobrep} "
-        f"(atribuídos ao ortofoto de centro mais próximo)")
+    rel(f"  Atribuídos a uma ortofoto:          {n_atrib}")
+    rel(f"  Fora de todas as ortofotos:         {n_fora}")
+    rel(f"  Em limite comum / sobreposição:     {n_sobrep} "
+        f"(atribuídos à ortofoto de centro mais próximo)")
     rel()
     rel("ESTATÍSTICAS POR ORTOFOTO")
     rel(f"  {'ortofoto':<22}{'edif.':>7}{'km2':>7}{'edif/km2':>10}{'%área ed.':>10}"
@@ -296,7 +354,7 @@ def main(rel):
             f"{marca}")
     rel(f"  (mediana = área mediana dos edifícios em m2; %peq. = edifícios < {AREA_PEQUENO:g} m2)")
     rel()
-    rel("ESTRATOS DE DENSIDADE (tercis dos ortofotos com >= "
+    rel("ESTRATOS DE DENSIDADE (tercis das ortofotos com >= "
         f"{MIN_EDIF_ORTO} edifícios, por edifícios/km2)")
     for nm in nomes_estr:
         L = estratos[nm]
@@ -307,11 +365,11 @@ def main(rel):
         rel(f"  excluídos (< {MIN_EDIF_ORTO} edifícios): {', '.join(insuf)}")
     rel()
     rel("CRITÉRIO DE SUGESTÃO")
-    rel("  Um ortofoto por estrato. Ordenação por: (1) proporção de edifícios dentro de "
+    rel("  Uma ortofoto por estrato. Ordenação por: (1) proporção de edifícios dentro de "
         f"{PROP_MIN:.0%}-{PROP_MAX:.0%};")
     rel(f"  (2) proximidade a {PROP_ALVO:.0%}; (3) densidade próxima da mediana do estrato "
         "(representatividade);")
-    rel("  (4) desempate: preferência por ortofotos na margem da carta.")
+    rel(f"  {texto_criterio_margem()}")
     rel()
     rel(f"MELHORES COMBINAÇÕES (de {len(combos)} possíveis)")
     for i, (fora, pont, prop, rep, interiores, trio) in enumerate(combos[:N_COMBINACOES], 1):

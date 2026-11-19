@@ -8,7 +8,7 @@ ambos com backbone ResNet-50.
 ## Estrutura
 
 ```
-r-viaria/
+2_RedeViaria/
 ├── 40a_Sondagem_RViaria.py        preparação dos dados
 ├── 40b_Area_Treino_Teste.py
 ├── 41_Classificar_RViaria.py

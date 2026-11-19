@@ -50,7 +50,7 @@ A pasta `UNET/` contém os scripts de **todos** os modelos v2 de 4 bandas (não 
 ## Estrutura
 
 ```
-ocupa-solo/
+3_OcupaSolo/
 ├── SAMLORA/                                 versão 1 (histórica)
 │   ├── 21_rotulos_ocupacao.py
 │   ├── 22_separar_treino_teste_ocupacao.py

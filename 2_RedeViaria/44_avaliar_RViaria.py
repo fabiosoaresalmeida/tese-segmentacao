@@ -50,6 +50,9 @@ Modelos com nDSM (5 bandas): a entrada não é a ortofoto de 4 bandas de PASTA_O
 mas um recorte do ortomosaico de 5 bandas (cfg 'mosaico') com a extensão e a grelha
 exatas da ortofoto, criado uma vez em PASTA_AVAL/ortos_5bandas.
 AVALIAR escolhe os modelos desta corrida (as inferências já feitas são reutilizadas).
+Para cada par de COMPARAR_NDSM (modelo de 4 bandas, modelo com nDSM) avaliado na
+corrida, grava comparacao_ndsm_<corrida>.csv com as métricas sobre os eixos (TOTAL)
+dos dois modelos e a diferença (nDSM - 4 bandas), por versão e tolerância.
 
 Executar na linha de comandos (arcgispro-py3). Requer Image Analyst e Spatial Analyst;
 a versão 'centerline' requer a extensão do Polygon to Centerline (Topographic Production).
@@ -135,6 +138,8 @@ MODELOS = {
 }
 
 # Modelos desta corrida (None = todos). A comparação 4 bandas vs nDSM só precisa destes:
+# Pares (4 bandas, com nDSM) comparados no fim da corrida
+COMPARAR_NDSM = [("mtre_rede_viaria", "mtre_rede_viaria_ndsm"), ("mtre_ferrovia", "mtre_ferrovia_ndsm")]
 # Os modelos com nDSM ainda não treinados são saltados (com aviso).
 AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm", "mtre_ferrovia", "mtre_ferrovia_ndsm"]
 
@@ -887,4 +892,28 @@ gravar(f"metricas_eixos_{CORRIDA}.csv", ["modelo", "versao", "folha", "toleranci
                               "extracao_km", "completeness", "correctness", "quality"], linhas_m)
 gravar(f"completeness_classes_{CORRIDA}.csv", ["modelo", "versao", "folha", "tolerancia_m", "classe",
                                     "ref_km", "detetado_km", "completeness"], linhas_c)
+# Comparação 4 bandas vs nDSM: métricas sobre os eixos (TOTAL) e diferença nDSM - 4 bandas
+totais = {(r[0], r[1], r[3]): r for r in linhas_m if r[2] == "TOTAL"}
+linhas_cmp = []
+for m4, mn in COMPARAR_NDSM:
+    for versao in VERSOES:
+        for tol in TOLERANCIAS:
+            a, b = totais.get((m4, versao, tol)), totais.get((mn, versao, tol))
+            if not a or not b:
+                continue
+            va = [float(x) if x != "" else None for x in a[6:9]]
+            vb = [float(x) if x != "" else None for x in b[6:9]]
+            dif = [fmt(y - x) if x is not None and y is not None else "" for x, y in zip(va, vb)]
+            linhas_cmp.append([m4, mn, versao, tol, a[4], a[5], b[5]] + list(a[6:9]) + list(b[6:9]) + dif)
+            if tol == 3.0:
+                log(f"  4 bandas vs nDSM | {m4} | {versao} | tol 3 m: quality {a[8]} -> {b[8]} "
+                    f"({dif[2]}) | completeness {a[6]} -> {b[6]} | correctness {a[7]} -> {b[7]}")
+if linhas_cmp:
+    gravar(f"comparacao_ndsm_{CORRIDA}.csv",
+           ["modelo_4b", "modelo_ndsm", "versao", "tolerancia_m", "ref_km", "extracao_km_4b",
+            "extracao_km_ndsm", "completeness_4b", "correctness_4b", "quality_4b",
+            "completeness_ndsm", "correctness_ndsm", "quality_ndsm",
+            "dif_completeness", "dif_correctness", "dif_quality"], linhas_cmp)
+else:
+    log("  sem pares 4 bandas / nDSM avaliados nesta corrida: comparação não gravada")
 log(f"Concluído -> {PASTA_AVAL}")

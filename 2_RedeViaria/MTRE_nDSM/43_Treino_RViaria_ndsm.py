@@ -100,9 +100,11 @@ EXPERIENCIAS = {
     ),
 }
 
-COMPARAR_COM = {   # modelos de 4 bandas equivalentes
-    "mtre_rede_viaria_ndsm_resnet50": "mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137 (4 bandas)",
-    "mtre_ferrovia_ndsm_resnet50": "mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209 (4 bandas)",
+# Modelos MTRE de 4 bandas equivalentes: o parametros.json do seu registo de treino
+# (<modelo>_registo) dá o n.º de chips, que tem de ser igual ao da exportação com nDSM
+MODELOS_4B = {
+    "mtre_rede_viaria_ndsm_resnet50": r"D:\DL\Modelos\126_RViaria\mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137",
+    "mtre_ferrovia_ndsm_resnet50": r"D:\DL\Modelos\126_RViaria\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
 }
 
 ERROS_MEMORIA = ("out of memory", "cuda error", "cudnn_status_alloc_failed")
@@ -139,6 +141,18 @@ def info_ambiente():
     except Exception:
         pass
     return info
+
+
+def parametros_4_bandas(nome):
+    """parametros.json do treino do MTRE de 4 bandas equivalente ({} se não houver)."""
+    pasta = MODELOS_4B.get(nome)
+    if not pasta:
+        return {}
+    try:
+        with open(os.path.join(pasta + "_registo", "parametros.json"), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
 
 
 def contar_chips(pasta):
@@ -230,7 +244,8 @@ def treinar(nome, p, ambiente):
             "arguments": p["arguments"],
             "learning_rate": p["learning_rate"] or "automatico",
             "bandas": bandas_chips(p["pasta"]),
-            "comparar_com": COMPARAR_COM.get(nome, ""),
+            "comparar_com": os.path.basename(MODELOS_4B.get(nome, "")),
+            "n_chips_4_bandas": parametros_4_bandas(nome).get("n_chips"),
             "ambiente": ambiente,
         }
         with open(os.path.join(registo, "parametros.json"), "w", encoding="utf-8") as fh:
@@ -316,6 +331,16 @@ for n, p in ATIVAS.items():
               "exportados do ortomosaico errado?")
     else:
         print(f"  {n}: {chips} chips, {pares} pares em {p['pasta']}")
+        p4 = parametros_4_bandas(n)
+        if not p4:
+            print(f"    (sem parametros.json do MTRE de 4 bandas em {MODELOS_4B.get(n)}_registo)")
+        else:
+            atuais = {"max_epocas": p.get("epocas", EPOCAS), "batch": p["batches"][0], "chip": CHIP,
+                      "arguments": p["arguments"], "validacao_pct": VALIDACAO, "monitor": MONITOR}
+            diferentes = [k for k, v in atuais.items() if k in p4 and str(p4[k]) != str(v)]
+            print(f"    MTRE de 4 bandas: {p4.get('n_chips')} chips"
+                  + (" (iguais)" if p4.get("n_chips") == chips else "  ATENÇÃO: n.º de chips diferente")
+                  + (f" | parâmetros diferentes: {', '.join(diferentes)}" if diferentes else " | mesmos parâmetros"))
         PRONTAS[n] = p
 if not PRONTAS:
     raise SystemExit("Nenhuma experiência com dados válidos.")

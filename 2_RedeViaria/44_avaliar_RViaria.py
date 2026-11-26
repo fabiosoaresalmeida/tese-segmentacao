@@ -46,10 +46,13 @@ Saídas:
   pixel_tolerancia_<corrida>.csv, metricas_eixos_<corrida>.csv,
   completeness_classes_<corrida>.csv (CSV com a coluna 'versao')
 
-Modelos com nDSM (5 bandas): a entrada não é a ortofoto de 4 bandas de PASTA_ORTOS,
-mas um recorte do ortomosaico de 5 bandas (cfg 'mosaico') com a extensão e a grelha
-exatas da ortofoto, criado uma vez em PASTA_AVAL/ortos_5bandas.
+Modelos treinados noutro ortomosaico (nDSM: 5 bandas; RGB: 3 bandas): a entrada não é
+a ortofoto de 4 bandas de PASTA_ORTOS, mas um recorte desse ortomosaico (cfg 'mosaico')
+com a extensão e a grelha exatas da ortofoto, criado uma vez em PASTA_AVAL/ortos_mosaicos.
 AVALIAR escolhe os modelos desta corrida (as inferências já feitas são reutilizadas).
+Para cada par de COMPARAR (modelo de 4 bandas, modelo a comparar) avaliado na corrida,
+grava comparacao_<corrida>.csv com as métricas sobre os eixos (TOTAL) dos dois modelos
+e a diferença (modelo a comparar - 4 bandas), por versão e tolerância.
 
 Executar na linha de comandos (arcgispro-py3). Requer Image Analyst e Spatial Analyst;
 a versão 'centerline' requer a extensão do Polygon to Centerline (Topographic Production).
@@ -103,6 +106,9 @@ FERROVIA = ["Caminho_de_ferro_via_larga_unica"]
 # Ortomosaico de 5 bandas (R, G, B, NIR, nDSM) e modelos treinados com ele (MTRE_nDSM/43)
 ORTO_NDSM = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126_ndsm\126_nDSM_5bandas_v2.tif"
 PASTA_MODELOS_NDSM = r"D:\DL\Modelos\126_RViaria_nDSM"
+# Ortomosaico RGB de 3 bandas (6_RGB_vs_NIR/1_preparar_ortos.py) e modelos treinados com ele (MTRE_RGB/43)
+ORTO_RGB = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico_RGB\126.tif"
+PASTA_MODELOS_RGB = r"D:\DL\Modelos\126_RViaria_RGB"
 
 # pasta=None: usa o modelo mais recente (com .emd, sem '_teste_') de 'procurar' que
 # comece por 'prefixo'. mosaico: raster de entrada em vez das ortos de 4 bandas.
@@ -117,10 +123,28 @@ MODELOS = {
         mosaico=ORTO_NDSM,
         referencia=VIAS,
     ),
+    # MTRE só com RGB: mesmos parâmetros e etiquetas, 3 bandas
+    "mtre_rede_viaria_rgb": dict(
+        pasta=None, procurar=PASTA_MODELOS_RGB, prefixo="mtre_rede_viaria_rgb_resnet50_",
+        mosaico=ORTO_RGB,
+        referencia=VIAS,
+    ),
     # U-Net binário (chips 256, backbone congelado): mesma tarefa e referência do MTRE
     "unet_rede_viaria": dict(
         pasta=r"D:\DL\Modelos\126_RViaria_Resnet50\unet_resnet50_rede_binario_b8_binario_lrlim_treino_20261102_1429",
         referencia=VIAS,
+    ),
+    # MTRE da ferrovia com nDSM: mesmos parâmetros e etiquetas, 5 bandas
+    "mtre_ferrovia_ndsm": dict(
+        pasta=None, procurar=PASTA_MODELOS_NDSM, prefixo="mtre_ferrovia_ndsm_resnet50_",
+        mosaico=ORTO_NDSM,
+        referencia=FERROVIA,
+    ),
+    # MTRE da ferrovia só com RGB: mesmos parâmetros e etiquetas, 3 bandas
+    "mtre_ferrovia_rgb": dict(
+        pasta=None, procurar=PASTA_MODELOS_RGB, prefixo="mtre_ferrovia_rgb_resnet50_",
+        mosaico=ORTO_RGB,
+        referencia=FERROVIA,
     ),
     "mtre_ferrovia": dict(
         pasta=r"D:\DL\Modelos\126_RViaria\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
@@ -128,8 +152,13 @@ MODELOS = {
     ),
 }
 
-# Modelos desta corrida (None = todos). A comparação 4 bandas vs nDSM só precisa destes:
-AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm"]
+# Pares (modelo de 4 bandas, modelo a comparar) comparados no fim da corrida
+COMPARAR = [("mtre_rede_viaria", "mtre_rede_viaria_ndsm"), ("mtre_ferrovia", "mtre_ferrovia_ndsm"),
+            ("mtre_rede_viaria", "mtre_rede_viaria_rgb"), ("mtre_ferrovia", "mtre_ferrovia_rgb")]
+# Modelos desta corrida (None = todos). Os modelos com nDSM ou RGB ainda não treinados
+# são saltados (com aviso).
+AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm", "mtre_rede_viaria_rgb",
+           "mtre_ferrovia", "mtre_ferrovia_ndsm", "mtre_ferrovia_rgb"]
 
 MARGEM_ESPELHO_M = 32.0  # metros de imagem espelhada à volta da orto (usar o mesmo dos edifícios)
 APAGAR_ESPELHO = True   # apagar a orto espelhada temporária depois da inferência
@@ -227,14 +256,15 @@ def modelo_emd(pasta):
 
 
 def pasta_modelo(cfg):
-    """Pasta do modelo: a indicada, ou a mais recente com .emd em cfg['procurar']."""
+    """Pasta do modelo: a indicada, ou a mais recente com .emd em cfg['procurar']
+    (None se ainda não houver nenhum modelo concluído)."""
     if cfg.get("pasta"):
         return cfg["pasta"]
     cand = [d for d in glob.glob(os.path.join(cfg["procurar"], cfg["prefixo"] + "*"))
             if os.path.isdir(d) and not d.endswith("_registo") and "_teste_" not in os.path.basename(d)
             and glob.glob(os.path.join(d, "*.emd"))]
     if not cand:
-        raise SystemExit(f"Nenhum modelo concluído '{cfg['prefixo']}*' em {cfg['procurar']}")
+        return None
     return max(cand, key=os.path.getmtime)
 
 
@@ -244,8 +274,9 @@ def orto_entrada(cfg, folha):
     orto4 = os.path.join(PASTA_ORTOS, folha + ".tif")
     if not cfg.get("mosaico"):
         return orto4
-    base = os.path.splitext(os.path.basename(cfg["mosaico"]))[0]
-    pasta = os.path.join(PASTA_AVAL, "ortos_5bandas", base)
+    # pasta própria por mosaico: pasta-mãe + nome (o RGB chama-se também 126.tif)
+    base = os.path.basename(os.path.dirname(cfg["mosaico"])) + "_" + os.path.splitext(os.path.basename(cfg["mosaico"]))[0]
+    pasta = os.path.join(PASTA_AVAL, "ortos_mosaicos", base)
     os.makedirs(pasta, exist_ok=True)
     saida = os.path.join(pasta, folha + ".tif")
     if arcpy.Exists(saida):
@@ -752,7 +783,11 @@ log(f"Avaliação 44 | corrida {CORRIDA} | modo teste: {MODO_TESTE} | ortos: {',
 for nome, cfg in MODELOS.items():
     if AVALIAR and nome not in AVALIAR:
         continue
-    emd = modelo_emd(pasta_modelo(cfg))
+    pasta_mod = pasta_modelo(cfg)
+    if pasta_mod is None:
+        log(f"=== {nome}: nenhum modelo concluído '{cfg['prefixo']}*' em {cfg['procurar']}: saltado")
+        continue
+    emd = modelo_emd(pasta_mod)
     pasta_m = os.path.join(PASTA_AVAL, nome)            # rasters classificados (partilhados)
     pasta_c = os.path.join(pasta_m, f"corrida_{CORRIDA}")  # saídas desta corrida
     os.makedirs(pasta_c, exist_ok=True)
@@ -875,4 +910,28 @@ gravar(f"metricas_eixos_{CORRIDA}.csv", ["modelo", "versao", "folha", "toleranci
                               "extracao_km", "completeness", "correctness", "quality"], linhas_m)
 gravar(f"completeness_classes_{CORRIDA}.csv", ["modelo", "versao", "folha", "tolerancia_m", "classe",
                                     "ref_km", "detetado_km", "completeness"], linhas_c)
+# Comparação com os modelos de 4 bandas: métricas sobre os eixos (TOTAL) e diferença
+totais = {(r[0], r[1], r[3]): r for r in linhas_m if r[2] == "TOTAL"}
+linhas_cmp = []
+for m4, mn in COMPARAR:
+    for versao in VERSOES:
+        for tol in TOLERANCIAS:
+            a, b = totais.get((m4, versao, tol)), totais.get((mn, versao, tol))
+            if not a or not b:
+                continue
+            va = [float(x) if x != "" else None for x in a[6:9]]
+            vb = [float(x) if x != "" else None for x in b[6:9]]
+            dif = [fmt(y - x) if x is not None and y is not None else "" for x, y in zip(va, vb)]
+            linhas_cmp.append([m4, mn, versao, tol, a[4], a[5], b[5]] + list(a[6:9]) + list(b[6:9]) + dif)
+            if tol == 3.0:
+                log(f"  {m4} vs {mn} | {versao} | tol 3 m: quality {a[8]} -> {b[8]} "
+                    f"({dif[2]}) | completeness {a[6]} -> {b[6]} | correctness {a[7]} -> {b[7]}")
+if linhas_cmp:
+    gravar(f"comparacao_{CORRIDA}.csv",
+           ["modelo_4b", "modelo_cmp", "versao", "tolerancia_m", "ref_km", "extracao_km_4b",
+            "extracao_km_cmp", "completeness_4b", "correctness_4b", "quality_4b",
+            "completeness_cmp", "correctness_cmp", "quality_cmp",
+            "dif_completeness", "dif_correctness", "dif_quality"], linhas_cmp)
+else:
+    log("  sem pares de COMPARAR avaliados nesta corrida: comparação não gravada")
 log(f"Concluído -> {PASTA_AVAL}")

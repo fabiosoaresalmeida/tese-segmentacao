@@ -3,10 +3,13 @@ r"""
 MTRE_nDSM/43_Treino_RViaria_ndsm.py
 Train Deep Learning Model - Multi-Task Road Extractor (linknet), ResNet-50, chips 512,
 learning rate automático (LR Finder), com os chips de 5 bandas (R, G, B, NIR, nDSM)
-exportados pelo MTRE_nDSM/42_Export_RViaria_ndsm.py.
+exportados pelo MTRE_nDSM/42_Export_RViaria_ndsm.py. Dois modelos binários:
+  - rede viária (pavimentada + não pavimentada)
+  - ferrovia
 
-Os parâmetros são IGUAIS aos do MTRE de 4 bandas (MTRE/43_Treino_RViaria.py:
-mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137), para que a única diferença
+Os parâmetros são IGUAIS aos dos MTRE de 4 bandas (MTRE/43_Treino_RViaria.py:
+mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137 e
+mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209), para que a única diferença
 seja a banda do nDSM. Os pesos pré-treinados do ResNet-50 só existem para as bandas
 RGB; os da banda do nDSM são inicializados pelo arcgis.learn sem pré-treino.
 
@@ -54,6 +57,7 @@ MODO_TESTE = False       # True = 1 época por modelo; False = treino real
 
 TRAINING = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training"
 PASTA_REDE_NDSM = os.path.join(TRAINING, "rede_viaria_chip512_binario_ndsm")   # 5 bandas (MTRE_nDSM/42)
+PASTA_FERRO_NDSM = os.path.join(TRAINING, "ferrovia_chip512_binario_ndsm")      # 5 bandas (MTRE_nDSM/42)
 PASTA_MODELOS = r"D:\DL\Modelos\126_RViaria_nDSM"
 N_BANDAS = 5
 
@@ -72,8 +76,9 @@ MTRE_ARGS = "gaussian_thresh 0.76;orient_bin_size 20;mtl_model linknet"
 EXPERIENCIAS = {
     # MTRE binário da rede viária (pavimentada + não pavimentada), com o nDSM.
     # Mesmos parâmetros do MTRE de 4 bandas (mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137)
+    # ativo=False: já em treino (lançado a 26/11/2026)
     "mtre_rede_viaria_ndsm_resnet50": dict(
-        ativo=True,
+        ativo=False,
         pasta=PASTA_REDE_NDSM,
         model_type="MULTITASK_ROADEXTRACTOR",
         backbone_model="RESNET50",
@@ -81,6 +86,25 @@ EXPERIENCIAS = {
         learning_rate=None,
         batches=[8, 4],
     ),
+    # MTRE binário da ferrovia, com o nDSM.
+    # Mesmos parâmetros do MTRE de 4 bandas (mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209)
+    "mtre_ferrovia_ndsm_resnet50": dict(
+        ativo=True,
+        epocas=100,   # poucos chips: mais épocas para atualizações suficientes (como no de 4 bandas)
+        pasta=PASTA_FERRO_NDSM,
+        model_type="MULTITASK_ROADEXTRACTOR",
+        backbone_model="RESNET50",
+        arguments=MTRE_ARGS,
+        learning_rate=None,
+        batches=[8, 4],
+    ),
+}
+
+# Modelos MTRE de 4 bandas equivalentes: o parametros.json do seu registo de treino
+# (<modelo>_registo) dá o n.º de chips, que tem de ser igual ao da exportação com nDSM
+MODELOS_4B = {
+    "mtre_rede_viaria_ndsm_resnet50": r"D:\DL\Modelos\126_RViaria\mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137",
+    "mtre_ferrovia_ndsm_resnet50": r"D:\DL\Modelos\126_RViaria\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
 }
 
 ERROS_MEMORIA = ("out of memory", "cuda error", "cudnn_status_alloc_failed")
@@ -117,6 +141,18 @@ def info_ambiente():
     except Exception:
         pass
     return info
+
+
+def parametros_4_bandas(nome):
+    """parametros.json do treino do MTRE de 4 bandas equivalente ({} se não houver)."""
+    pasta = MODELOS_4B.get(nome)
+    if not pasta:
+        return {}
+    try:
+        with open(os.path.join(pasta + "_registo", "parametros.json"), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
 
 
 def contar_chips(pasta):
@@ -208,7 +244,8 @@ def treinar(nome, p, ambiente):
             "arguments": p["arguments"],
             "learning_rate": p["learning_rate"] or "automatico",
             "bandas": bandas_chips(p["pasta"]),
-            "comparar_com": "mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137 (4 bandas)",
+            "comparar_com": os.path.basename(MODELOS_4B.get(nome, "")),
+            "n_chips_4_bandas": parametros_4_bandas(nome).get("n_chips"),
             "ambiente": ambiente,
         }
         with open(os.path.join(registo, "parametros.json"), "w", encoding="utf-8") as fh:
@@ -294,6 +331,16 @@ for n, p in ATIVAS.items():
               "exportados do ortomosaico errado?")
     else:
         print(f"  {n}: {chips} chips, {pares} pares em {p['pasta']}")
+        p4 = parametros_4_bandas(n)
+        if not p4:
+            print(f"    (sem parametros.json do MTRE de 4 bandas em {MODELOS_4B.get(n)}_registo)")
+        else:
+            atuais = {"max_epocas": p.get("epocas", EPOCAS), "batch": p["batches"][0], "chip": CHIP,
+                      "arguments": p["arguments"], "validacao_pct": VALIDACAO, "monitor": MONITOR}
+            diferentes = [k for k, v in atuais.items() if k in p4 and str(p4[k]) != str(v)]
+            print(f"    MTRE de 4 bandas: {p4.get('n_chips')} chips"
+                  + (" (iguais)" if p4.get("n_chips") == chips else "  ATENÇÃO: n.º de chips diferente")
+                  + (f" | parâmetros diferentes: {', '.join(diferentes)}" if diferentes else " | mesmos parâmetros"))
         PRONTAS[n] = p
 if not PRONTAS:
     raise SystemExit("Nenhuma experiência com dados válidos.")

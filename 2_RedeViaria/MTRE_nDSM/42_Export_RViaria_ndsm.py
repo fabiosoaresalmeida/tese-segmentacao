@@ -23,6 +23,7 @@ Executar no Python Command Prompt do ArcGIS Pro (arcgispro-py3):
 Requer a extensão Image Analyst.
 """
 import os
+import json
 import time
 import shutil
 import numpy as np
@@ -49,8 +50,12 @@ CONJUNTOS = {                                                               # et
                     os.path.join(TRAINING, "ferrovia_chip512_binario_ndsm")),
 }
 EXPORTAR = ["rede_viaria", "ferrovia"]   # os já exportados e válidos são saltados
-# Chips das exportações de 4 bandas, para comparar
-CHIPS_4B = {"rede_viaria": 6694, "ferrovia": None}
+# Modelos MTRE de 4 bandas equivalentes: o n.º de chips com que foram treinados é lido
+# do parametros.json do registo de treino (<modelo>_registo), só para comparação no fim
+MODELOS_4B = {
+    "rede_viaria": r"D:\DL\Modelos\126_RViaria\mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137",
+    "ferrovia": r"D:\DL\Modelos\126_RViaria\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
+}
 
 CHIP = 512        # iguais ao MTRE de 4 bandas
 STRIDE = 256      # sobreposição de 50 %
@@ -85,6 +90,18 @@ def validar_pasta(pasta):
                 if not os.path.exists(os.path.join(pasta, rel)):
                     falta.append(rel)
     return pares, falta
+
+
+def chips_4_bandas(nome):
+    """N.º de chips do treino do MTRE de 4 bandas equivalente (None se não houver registo)."""
+    pasta = MODELOS_4B.get(nome)
+    if not pasta:
+        return None
+    try:
+        with open(os.path.join(pasta + "_registo", "parametros.json"), encoding="utf-8") as fh:
+            return json.load(fh).get("n_chips")
+    except (OSError, ValueError):
+        return None
 
 
 def verificar_ortomosaico():
@@ -210,8 +227,13 @@ def exportar(nome, etiquetas, pasta_saida):
     if chips:
         nb = arcpy.Raster(os.path.join(imgs, chips[0])).bandCount
         print(f"  bandas nos chips: {nb}" + ("" if nb == N_BANDAS else f"  ATENÇÃO: esperadas {N_BANDAS}"))
-    if CHIPS_4B.get(nome):
-        print(f"Para comparar: a exportação de 4 bandas tinha {CHIPS_4B[nome]} chips.")
+    n4 = chips_4_bandas(nome)
+    if n4:
+        print(f"Para comparar: o MTRE de 4 bandas foi treinado com {n4} chips"
+              + (" (iguais)" if n4 == len(chips) else f" (diferença de {len(chips) - n4:+d})"))
+    else:
+        print("Para comparar: n.º de chips do MTRE de 4 bandas não encontrado "
+              f"({MODELOS_4B.get(nome)}_registo\\parametros.json)")
 
 
 for nome in EXPORTAR:

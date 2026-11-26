@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 r"""
 MTRE_nDSM/42_Export_RViaria_ndsm.py
-Export Training Data For Deep Learning - rede viária (Classified Tiles), chips 512,
-a partir do ortomosaico com 5 bandas (R, G, B, NIR, nDSM normalizado), para treinar
-o Multi-Task Road Extractor com o nDSM e comparar com o MTRE de 4 bandas.
+Export Training Data For Deep Learning (Classified Tiles), chips 512, a partir do
+ortomosaico com 5 bandas (R, G, B, NIR, nDSM normalizado), para treinar o Multi-Task
+Road Extractor com o nDSM e comparar com o MTRE de 4 bandas. Dois conjuntos binários:
+  - rede_viaria: via pavimentada + não pavimentada
+  - ferrovia:    caminho de ferro
 
 Tudo o resto é IGUAL ao MTRE/42_Export_RViaria.py (etiquetas, máscara, chips 512,
 passo 256), para que a única diferença entre os dois modelos seja a 5.ª banda.
@@ -40,8 +42,15 @@ BANDA_NDSM = 5
 SHP = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\SHP"
 TRAINING = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training"
 AREA_TREINO = os.path.join(SHP, "area_treino.shp")                          # criado pelo 40b
-ETIQUETAS = os.path.join(SHP, "etiquetas_rede_viaria_binario.shp")         # criado pelo 41b
-PASTA_SAIDA = os.path.join(TRAINING, "rede_viaria_chip512_binario_ndsm")
+CONJUNTOS = {                                                               # etiquetas do 41b
+    "rede_viaria": (os.path.join(SHP, "etiquetas_rede_viaria_binario.shp"),
+                    os.path.join(TRAINING, "rede_viaria_chip512_binario_ndsm")),
+    "ferrovia":    (os.path.join(SHP, "etiquetas_ferrovia_binario.shp"),
+                    os.path.join(TRAINING, "ferrovia_chip512_binario_ndsm")),
+}
+EXPORTAR = ["rede_viaria", "ferrovia"]   # os já exportados e válidos são saltados
+# Chips das exportações de 4 bandas, para comparar
+CHIPS_4B = {"rede_viaria": 6694, "ferrovia": None}
 
 CHIP = 512        # iguais ao MTRE de 4 bandas
 STRIDE = 256      # sobreposição de 50 %
@@ -144,55 +153,69 @@ print("Verificações do ortomosaico: OK")
 if VERIFICAR_E_PARAR:
     raise SystemExit("VERIFICAR_E_PARAR = True: exportação não feita.")
 
-print(f"\n=== rede_viaria (nDSM) -> {PASTA_SAIDA}")
-for f in (ETIQUETAS, AREA_TREINO):
-    if not arcpy.Exists(f):
-        raise SystemExit(f"Inexistente: {f}")
-if os.path.exists(PASTA_SAIDA):
-    pares, falta = validar_pasta(PASTA_SAIDA)
-    if pares and not falta and not REFAZER:
-        raise SystemExit(f"Já exportado e válido ({pares} pares): nada a fazer (REFAZER = True para repetir).")
-    motivo = "REFAZER = True" if (pares and not falta) else "exportação inconsistente"
-    print(f"  a apagar a exportação anterior ({motivo})")
-    shutil.rmtree(PASTA_SAIDA)
-os.makedirs(os.path.dirname(PASTA_SAIDA), exist_ok=True)
-t0 = time.time()
+if not arcpy.Exists(AREA_TREINO):
+    raise SystemExit(f"Inexistente: {AREA_TREINO}")
 
-arcpy.ia.ExportTrainingDataForDeepLearning(
-    in_raster=ORTO_NDSM,
-    out_folder=PASTA_SAIDA,
-    in_class_data=ETIQUETAS,
-    image_chip_format="TIFF",
-    tile_size_x=CHIP,
-    tile_size_y=CHIP,
-    stride_x=STRIDE,
-    stride_y=STRIDE,
-    output_nofeature_tiles="ONLY_TILES_WITH_FEATURES",
-    metadata_format="Classified_Tiles",
-    start_index=0,
-    class_value_field="Classvalue",
-    buffer_radius=0,
-    # A máscara é essencial: sem ela, os chips que cruzam o limite da área
-    # de treino têm vias reais fora da área etiquetadas como fundo.
-    in_mask_polygons=AREA_TREINO,
-    rotation_angle=0,
-    reference_system="MAP_SPACE",
-    processing_mode="PROCESS_AS_MOSAICKED_IMAGE",
-    blacken_around_feature="NO_BLACKEN",
-    crop_mode="FIXED_SIZE",
-)
 
-print(arcpy.GetMessages())
-imgs = os.path.join(PASTA_SAIDA, "images")
-chips = [f for f in os.listdir(imgs) if f.lower().endswith((".tif", ".tiff"))]
-pares, falta = validar_pasta(PASTA_SAIDA)
-print(f"Chips exportados: {len(chips)} | pares no map.txt: {pares} | "
-      f"tempo: {(time.time() - t0) / 60:.1f} min")
-if falta:
-    print(f"  ATENÇÃO: {len(falta)} ficheiros do map.txt em falta, ex.: {falta[:5]}")
-else:
-    print("  verificação OK: todos os pares imagem/label existem")
-if chips:
-    nb = arcpy.Raster(os.path.join(imgs, chips[0])).bandCount
-    print(f"  bandas nos chips: {nb}" + ("" if nb == N_BANDAS else f"  ATENÇÃO: esperadas {N_BANDAS}"))
-print("Para comparar: o MTRE de 4 bandas foi treinado com 6694 chips (rede_viaria_chip512_binario).")
+def exportar(nome, etiquetas, pasta_saida):
+    print(f"\n=== {nome} (nDSM) -> {pasta_saida}")
+    if not arcpy.Exists(etiquetas):
+        print(f"  ERRO: etiquetas inexistentes ({etiquetas}): conjunto saltado")
+        return
+    if os.path.exists(pasta_saida):
+        pares, falta = validar_pasta(pasta_saida)
+        if pares and not falta and not REFAZER:
+            print(f"  já exportado e válido ({pares} pares): saltado (REFAZER = True para repetir)")
+            return
+        motivo = "REFAZER = True" if (pares and not falta) else "exportação inconsistente"
+        print(f"  a apagar a exportação anterior ({motivo})")
+        shutil.rmtree(pasta_saida)
+    os.makedirs(os.path.dirname(pasta_saida), exist_ok=True)
+    t0 = time.time()
+
+    arcpy.ia.ExportTrainingDataForDeepLearning(
+        in_raster=ORTO_NDSM,
+        out_folder=pasta_saida,
+        in_class_data=etiquetas,
+        image_chip_format="TIFF",
+        tile_size_x=CHIP,
+        tile_size_y=CHIP,
+        stride_x=STRIDE,
+        stride_y=STRIDE,
+        output_nofeature_tiles="ONLY_TILES_WITH_FEATURES",
+        metadata_format="Classified_Tiles",
+        start_index=0,
+        class_value_field="Classvalue",
+        buffer_radius=0,
+        # A máscara é essencial: sem ela, os chips que cruzam o limite da área
+        # de treino têm vias reais fora da área etiquetadas como fundo.
+        in_mask_polygons=AREA_TREINO,
+        rotation_angle=0,
+        reference_system="MAP_SPACE",
+        processing_mode="PROCESS_AS_MOSAICKED_IMAGE",
+        blacken_around_feature="NO_BLACKEN",
+        crop_mode="FIXED_SIZE",
+    )
+
+    print(arcpy.GetMessages())
+    imgs = os.path.join(pasta_saida, "images")
+    chips = [f for f in os.listdir(imgs) if f.lower().endswith((".tif", ".tiff"))]
+    pares, falta = validar_pasta(pasta_saida)
+    print(f"Chips exportados: {len(chips)} | pares no map.txt: {pares} | "
+          f"tempo: {(time.time() - t0) / 60:.1f} min")
+    if falta:
+        print(f"  ATENÇÃO: {len(falta)} ficheiros do map.txt em falta, ex.: {falta[:5]}")
+    else:
+        print("  verificação OK: todos os pares imagem/label existem")
+    if chips:
+        nb = arcpy.Raster(os.path.join(imgs, chips[0])).bandCount
+        print(f"  bandas nos chips: {nb}" + ("" if nb == N_BANDAS else f"  ATENÇÃO: esperadas {N_BANDAS}"))
+    if CHIPS_4B.get(nome):
+        print(f"Para comparar: a exportação de 4 bandas tinha {CHIPS_4B[nome]} chips.")
+
+
+for nome in EXPORTAR:
+    if nome not in CONJUNTOS:
+        print(f"\n=== {nome}: não está definido em CONJUNTOS, saltado")
+        continue
+    exportar(nome, *CONJUNTOS[nome])

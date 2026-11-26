@@ -122,6 +122,12 @@ MODELOS = {
         pasta=r"D:\DL\Modelos\126_RViaria_Resnet50\unet_resnet50_rede_binario_b8_binario_lrlim_treino_20261102_1429",
         referencia=VIAS,
     ),
+    # MTRE da ferrovia com nDSM: mesmos parâmetros e etiquetas, 5 bandas
+    "mtre_ferrovia_ndsm": dict(
+        pasta=None, procurar=PASTA_MODELOS_NDSM, prefixo="mtre_ferrovia_ndsm_resnet50_",
+        mosaico=ORTO_NDSM,
+        referencia=FERROVIA,
+    ),
     "mtre_ferrovia": dict(
         pasta=r"D:\DL\Modelos\126_RViaria\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
         referencia=FERROVIA,
@@ -129,7 +135,8 @@ MODELOS = {
 }
 
 # Modelos desta corrida (None = todos). A comparação 4 bandas vs nDSM só precisa destes:
-AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm"]
+# Os modelos com nDSM ainda não treinados são saltados (com aviso).
+AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm", "mtre_ferrovia", "mtre_ferrovia_ndsm"]
 
 MARGEM_ESPELHO_M = 32.0  # metros de imagem espelhada à volta da orto (usar o mesmo dos edifícios)
 APAGAR_ESPELHO = True   # apagar a orto espelhada temporária depois da inferência
@@ -227,14 +234,15 @@ def modelo_emd(pasta):
 
 
 def pasta_modelo(cfg):
-    """Pasta do modelo: a indicada, ou a mais recente com .emd em cfg['procurar']."""
+    """Pasta do modelo: a indicada, ou a mais recente com .emd em cfg['procurar']
+    (None se ainda não houver nenhum modelo concluído)."""
     if cfg.get("pasta"):
         return cfg["pasta"]
     cand = [d for d in glob.glob(os.path.join(cfg["procurar"], cfg["prefixo"] + "*"))
             if os.path.isdir(d) and not d.endswith("_registo") and "_teste_" not in os.path.basename(d)
             and glob.glob(os.path.join(d, "*.emd"))]
     if not cand:
-        raise SystemExit(f"Nenhum modelo concluído '{cfg['prefixo']}*' em {cfg['procurar']}")
+        return None
     return max(cand, key=os.path.getmtime)
 
 
@@ -752,7 +760,11 @@ log(f"Avaliação 44 | corrida {CORRIDA} | modo teste: {MODO_TESTE} | ortos: {',
 for nome, cfg in MODELOS.items():
     if AVALIAR and nome not in AVALIAR:
         continue
-    emd = modelo_emd(pasta_modelo(cfg))
+    pasta_mod = pasta_modelo(cfg)
+    if pasta_mod is None:
+        log(f"=== {nome}: nenhum modelo concluído '{cfg['prefixo']}*' em {cfg['procurar']}: saltado")
+        continue
+    emd = modelo_emd(pasta_mod)
     pasta_m = os.path.join(PASTA_AVAL, nome)            # rasters classificados (partilhados)
     pasta_c = os.path.join(pasta_m, f"corrida_{CORRIDA}")  # saídas desta corrida
     os.makedirs(pasta_c, exist_ok=True)

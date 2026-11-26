@@ -16,6 +16,10 @@ ambos com backbone ResNet-50.
 ├── MTRE/
 │   ├── 42_Export_RViaria.py       exportação e treino do Multi-Task Road Extractor
 │   └── 43_Treino_RViaria.py
+├── MTRE_nDSM/                     MTRE com o ortomosaico de 5 bandas (R, G, B, NIR, nDSM)
+│   ├── 42_Export_RViaria_ndsm.py  ver MTRE_nDSM/README.md
+│   ├── 43_Treino_RViaria_ndsm.py
+│   └── README.md
 ├── unet/
 │   ├── 42_Export_RViaria_unet.py  exportação e treino do U-Net
 │   ├── 43_Treino_RViaria.py         (1.ª tentativa, LR automático: não aprendeu)

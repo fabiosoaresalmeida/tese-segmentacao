@@ -33,6 +33,8 @@ Os scripts confirmam esta equivalência a partir do `parametros.json` do registo
 
 O teste da rede viária (26/11/2026) confirmou que o MTRE aceita as 5 bandas; a ferrovia pode ir diretamente para o treino real.
 
+Para a ferrovia começar sozinha quando o treino da rede viária terminar, correr `MTRE_nDSM/99_esperar_e_correr_ferrovia.py` numa segunda janela do Python Command Prompt. Deteta o fim do treino pelo `resumo_treinos.csv` e corre a seguir o 42 (exporta a ferrovia) e o 43 (treina a ferrovia). Antes de esperar, confirma que o 43 tem a ferrovia com `ativo=True`, a rede viária com `ativo=False` e `MODO_TESTE = False`.
+
 ## Avaliação
 
 No 44, para os modelos com nDSM, a entrada da inferência é um recorte do ortomosaico de 5 bandas com a extensão e a grelha exatas de cada ortofoto de teste. O recorte é criado uma vez em `D:\DL\Avaliacao\126_RViaria\ortos_5bandas` e serve aos dois modelos. O resto do processo é igual: espelhamento das margens, três versões de vetorização e as mesmas métricas.

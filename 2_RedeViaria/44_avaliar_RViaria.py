@@ -48,8 +48,7 @@ Saídas:
 
 Modelos com nDSM (5 bandas): a entrada não é a ortofoto de 4 bandas de PASTA_ORTOS,
 mas um recorte do ortomosaico de 5 bandas (cfg 'mosaico') com a extensão e a grelha
-exatas da ortofoto, criado uma vez em PASTA_AVAL/ortos_5bandas. Com 'zerar_ndsm' a
-banda do nDSM desse recorte é posta a 0 (teste do contributo do nDSM, como nos edifícios).
+exatas da ortofoto, criado uma vez em PASTA_AVAL/ortos_5bandas.
 AVALIAR escolhe os modelos desta corrida (as inferências já feitas são reutilizadas).
 
 Executar na linha de comandos (arcgispro-py3). Requer Image Analyst e Spatial Analyst;
@@ -103,7 +102,6 @@ FERROVIA = ["Caminho_de_ferro_via_larga_unica"]
 
 # Ortomosaico de 5 bandas (R, G, B, NIR, nDSM) e modelos treinados com ele (MTRE_nDSM/43)
 ORTO_NDSM = r"D:\Users\Cap_Almeida\Projeto\126\Ortomosaico\126_ndsm\126_nDSM_5bandas_v2.tif"
-BANDA_NDSM = 5
 PASTA_MODELOS_NDSM = r"D:\DL\Modelos\126_RViaria_nDSM"
 
 # pasta=None: usa o modelo mais recente (com .emd, sem '_teste_') de 'procurar' que
@@ -119,12 +117,6 @@ MODELOS = {
         mosaico=ORTO_NDSM,
         referencia=VIAS,
     ),
-    # Teste: o mesmo modelo com a banda do nDSM a 0 (quanto depende do nDSM?)
-    "mtre_rede_viaria_ndsm_zero": dict(
-        pasta=None, procurar=PASTA_MODELOS_NDSM, prefixo="mtre_rede_viaria_ndsm_resnet50_",
-        mosaico=ORTO_NDSM, zerar_ndsm=True,
-        referencia=VIAS,
-    ),
     # U-Net binário (chips 256, backbone congelado): mesma tarefa e referência do MTRE
     "unet_rede_viaria": dict(
         pasta=r"D:\DL\Modelos\126_RViaria_Resnet50\unet_resnet50_rede_binario_b8_binario_lrlim_treino_20261102_1429",
@@ -137,7 +129,7 @@ MODELOS = {
 }
 
 # Modelos desta corrida (None = todos). A comparação 4 bandas vs nDSM só precisa destes:
-AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm", "mtre_rede_viaria_ndsm_zero"]
+AVALIAR = ["mtre_rede_viaria", "mtre_rede_viaria_ndsm"]
 
 MARGEM_ESPELHO_M = 32.0  # metros de imagem espelhada à volta da orto (usar o mesmo dos edifícios)
 APAGAR_ESPELHO = True   # apagar a orto espelhada temporária depois da inferência
@@ -253,7 +245,7 @@ def orto_entrada(cfg, folha):
     if not cfg.get("mosaico"):
         return orto4
     base = os.path.splitext(os.path.basename(cfg["mosaico"]))[0]
-    pasta = os.path.join(PASTA_AVAL, "ortos_5bandas", base + ("_ndsm_zero" if cfg.get("zerar_ndsm") else ""))
+    pasta = os.path.join(PASTA_AVAL, "ortos_5bandas", base)
     os.makedirs(pasta, exist_ok=True)
     saida = os.path.join(pasta, folha + ".tif")
     if arcpy.Exists(saida):
@@ -268,17 +260,7 @@ def orto_entrada(cfg, folha):
     if (r.width, r.height) != (r4.width, r4.height) or abs(r.extent.XMin - e.XMin) > 0.01 \
             or abs(r.extent.YMin - e.YMin) > 0.01:
         raise SystemExit(f"Recorte de {folha} desalinhado: {r.width}x{r.height} vs {r4.width}x{r4.height}")
-    if cfg.get("zerar_ndsm"):
-        a = arcpy.RasterToNumPyArray(saida)
-        a[BANDA_NDSM - 1] = 0
-        tmp = saida.replace(".tif", "_tmp.tif")
-        arcpy.management.Rename(saida, tmp)
-        out = arcpy.NumPyArrayToRaster(a, arcpy.Point(e.XMin, e.YMin), r.meanCellWidth, r.meanCellHeight)
-        out.save(saida)
-        arcpy.management.DefineProjection(saida, r.spatialReference)
-        arcpy.management.Delete(tmp)
-    log(f"    orto de entrada criada: {saida} ({arcpy.Raster(saida).bandCount} bandas"
-        + (", nDSM a 0" if cfg.get("zerar_ndsm") else "") + ")")
+    log(f"    orto de entrada criada: {saida} ({r.bandCount} bandas)")
     return saida
 
 
@@ -745,7 +727,7 @@ PARAMETROS = dict(
     angulo_travessa=ANGULO_TRAVESSA, colinear_min=COLINEAR_MIN, suave_m=SUAVE_M,
     extender_m=EXTENDER_M, simplificar_m=SIMPLIFICAR_M,
     batch_inferencia=BATCH_INFERENCIA, padding_max=PADDING_MAX,
-    modelos={n: {"pasta": pasta_modelo(c), "mosaico": c.get("mosaico"), "zerar_ndsm": bool(c.get("zerar_ndsm"))}
+    modelos={n: {"pasta": pasta_modelo(c), "mosaico": c.get("mosaico")}
              for n, c in MODELOS.items() if not AVALIAR or n in AVALIAR},
 )
 with open(os.path.join(PASTA_AVAL, f"parametros_{CORRIDA}.json"), "w", encoding="utf-8") as fh:

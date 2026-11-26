@@ -19,6 +19,11 @@ ambos com backbone ResNet-50.
 ├── MTRE_nDSM/                     MTRE com o ortomosaico de 5 bandas (R, G, B, NIR, nDSM)
 │   ├── 42_Export_RViaria_ndsm.py  ver MTRE_nDSM/README.md
 │   ├── 43_Treino_RViaria_ndsm.py
+│   ├── 99_esperar_e_correr_ferrovia.py
+│   └── README.md
+├── MTRE_RGB/                      MTRE só com o ortomosaico RGB (3 bandas)
+│   ├── 42_Export_RViaria_rgb.py   ver MTRE_RGB/README.md
+│   ├── 43_Treino_RViaria_rgb.py
 │   └── README.md
 ├── unet/
 │   ├── 42_Export_RViaria_unet.py  exportação e treino do U-Net

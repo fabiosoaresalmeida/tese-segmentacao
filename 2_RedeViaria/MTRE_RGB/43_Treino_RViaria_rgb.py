@@ -1,0 +1,364 @@
+# -*- coding: utf-8 -*-
+r"""
+MTRE_RGB/43_Treino_RViaria_rgb.py
+Train Deep Learning Model - Multi-Task Road Extractor (linknet), ResNet-50, chips 512,
+learning rate automático (LR Finder), com os chips RGB de 3 bandas exportados pelo
+MTRE_RGB/42_Export_RViaria_rgb.py. Dois modelos binários:
+  - rede viária (pavimentada + não pavimentada)
+  - ferrovia
+
+Os parâmetros são IGUAIS aos dos MTRE de 4 bandas (MTRE/43_Treino_RViaria.py:
+mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137 e
+mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209), para que a única diferença
+seja a falta do NIR. Com 3 bandas, os pesos pré-treinados do ResNet-50 (RGB) são
+usados sem adaptação da primeira camada.
+
+MODO_TESTE = True faz 1 época por modelo (verifica a memória da GPU e o tempo por
+época); com RGB o MTRE corre como no caso normal, pelo que o teste é opcional.
+
+MODO_TESTE = True  -> 1 época por modelo, sem paragem automática, para validar
+                      o fluxo, o LR encontrado, a memória da GPU e o tempo por época.
+MODO_TESTE = False -> treino real (até EPOCAS, com paragem automática).
+
+Registo guardado para cada experiência (pasta <modelo>_registo, ao lado da
+pasta do modelo, para não interferir com a escrita do modelo):
+  - parametros.json : configuração completa, versões, GPU, nº de chips
+  - mensagens.txt   : todas as mensagens do geoprocessamento (perdas por época)
+  - resumo.json     : início, fim, duração, estado, batch usado, LR encontrado, .emd
+  - TensorBoard     : curvas de treino (dentro da pasta do modelo)
+E um resumo de todas as experiências em <PASTA_MODELOS>\\resumo_treinos.csv
+
+Executar no Python Command Prompt do ArcGIS Pro (arcgispro-py3):
+    python 43_Treino_RViaria_rgb.py
+"""
+import os
+# Antes de qualquer import gráfico: matplotlib sem janelas (evita o erro
+# Tcl_AsyncDelete no fim do treino, quando o arcgis.learn desenha os gráficos)
+import matplotlib
+matplotlib.use("Agg")
+import re
+import csv
+import json
+import glob
+import time
+import platform
+import datetime
+import arcpy
+
+arcpy.CheckOutExtension("ImageAnalyst")
+arcpy.env.overwriteOutput = True
+arcpy.env.processorType = "GPU"
+arcpy.env.gpuId = 0
+
+# ---------------------------------------------------------------------------
+# CONFIGURAÇÃO
+# ---------------------------------------------------------------------------
+MODO_TESTE = False       # True = 1 época por modelo; False = treino real
+
+TRAINING = r"D:\Users\Cap_Almeida\Projeto\126\126_RedeViaria\Training"
+PASTA_REDE_RGB = os.path.join(TRAINING, "rede_viaria_chip512_binario_rgb")   # 3 bandas (MTRE_RGB/42)
+PASTA_FERRO_RGB = os.path.join(TRAINING, "ferrovia_chip512_binario_rgb")      # 3 bandas (MTRE_RGB/42)
+PASTA_MODELOS = r"D:\DL\Modelos\126_RViaria_RGB"
+N_BANDAS = 3
+
+EPOCAS = 50
+VALIDACAO = 10          # % de validação, como no baseline dos edifícios
+CHIP = 512
+PARAGEM = "STOP_TRAINING"   # paragem automática quando a perda de validação estagna
+MONITOR = "VALID_LOSS"
+
+MTRE_ARGS = "gaussian_thresh 0.76;orient_bin_size 20;mtl_model linknet"
+
+# Cada experiência: nome -> parâmetros. ativo=False para não correr.
+# epocas (opcional) sobrepõe-se a EPOCAS para essa experiência.
+# learning_rate=None -> taxa ótima estimada automaticamente (LR Finder).
+# batches: tentados por ordem; se faltar memória na GPU passa ao seguinte.
+EXPERIENCIAS = {
+    # MTRE binário da rede viária (pavimentada + não pavimentada), só RGB.
+    # Mesmos parâmetros do MTRE de 4 bandas (mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137)
+    "mtre_rede_viaria_rgb_resnet50": dict(
+        ativo=True,
+        pasta=PASTA_REDE_RGB,
+        model_type="MULTITASK_ROADEXTRACTOR",
+        backbone_model="RESNET50",
+        arguments=MTRE_ARGS,
+        learning_rate=None,
+        batches=[8, 4],
+    ),
+    # MTRE binário da ferrovia, só RGB.
+    # Mesmos parâmetros do MTRE de 4 bandas (mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209)
+    "mtre_ferrovia_rgb_resnet50": dict(
+        ativo=True,
+        epocas=100,   # poucos chips: mais épocas para atualizações suficientes (como no de 4 bandas)
+        pasta=PASTA_FERRO_RGB,
+        model_type="MULTITASK_ROADEXTRACTOR",
+        backbone_model="RESNET50",
+        arguments=MTRE_ARGS,
+        learning_rate=None,
+        batches=[8, 4],
+    ),
+}
+
+# Modelos MTRE de 4 bandas equivalentes: o parametros.json do seu registo de treino
+# (<modelo>_registo) dá o n.º de chips, que tem de ser igual ao da exportação RGB
+MODELOS_4B = {
+    "mtre_rede_viaria_rgb_resnet50": r"D:\DL\Modelos\126_RViaria\mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137",
+    "mtre_ferrovia_rgb_resnet50": r"D:\DL\Modelos\126_RViaria\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
+}
+
+ERROS_MEMORIA = ("out of memory", "cuda error", "cudnn_status_alloc_failed")
+
+
+# ---------------------------------------------------------------------------
+def agora():
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+
+def carimbo():
+    return datetime.datetime.now().strftime("%Y%m%d_%H%M")
+
+
+def info_ambiente():
+    info = {
+        "arcgis_pro": arcpy.GetInstallInfo().get("Version"),
+        "python": platform.python_version(),
+        "sistema": platform.platform(),
+        "processador": arcpy.env.processorType,
+        "gpu_id": arcpy.env.gpuId,
+    }
+    try:
+        import torch
+        info["torch"] = torch.__version__
+        info["cuda"] = torch.version.cuda
+        if torch.cuda.is_available():
+            info["gpu"] = torch.cuda.get_device_name(0)
+    except Exception:
+        pass
+    try:
+        import arcgis
+        info["arcgis_api"] = arcgis.__version__
+    except Exception:
+        pass
+    return info
+
+
+def parametros_4_bandas(nome):
+    """parametros.json do treino do MTRE de 4 bandas equivalente ({} se não houver)."""
+    pasta = MODELOS_4B.get(nome)
+    if not pasta:
+        return {}
+    try:
+        with open(os.path.join(pasta + "_registo", "parametros.json"), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+def contar_chips(pasta):
+    """Conta só os chips .tif (ignora .tfw, .aux.xml e outros auxiliares)."""
+    imgs = os.path.join(pasta, "images")
+    if not os.path.isdir(imgs):
+        return None
+    return sum(1 for f in os.listdir(imgs) if f.lower().endswith((".tif", ".tiff")))
+
+
+def bandas_chips(pasta):
+    """Número de bandas do primeiro chip da exportação."""
+    imgs = os.path.join(pasta, "images")
+    for f in sorted(os.listdir(imgs)):
+        if f.lower().endswith((".tif", ".tiff")):
+            return arcpy.Raster(os.path.join(imgs, f)).bandCount
+    return None
+
+
+def validar_pasta(pasta):
+    """Confirma que todos os pares do map.txt existem. Devolve (n_pares, em_falta)."""
+    mapa = os.path.join(pasta, "map.txt")
+    if not os.path.exists(mapa):
+        return 0, ["map.txt inexistente"]
+    pares, falta = 0, []
+    with open(mapa, encoding="utf-8") as fh:
+        for linha in fh:
+            partes = linha.split()
+            if not partes:
+                continue
+            pares += 1
+            for rel in partes[:2]:
+                rel = rel.replace("\\", os.sep).replace("/", os.sep)
+                if not os.path.exists(os.path.join(pasta, rel)):
+                    falta.append(rel)
+    return pares, falta
+
+
+def ler_emd(pasta):
+    for emd in glob.glob(os.path.join(pasta, "*.emd")):
+        try:
+            with open(emd, encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception as e:
+            return {"erro_leitura_emd": str(e)}
+    return None
+
+
+def lr_encontrado(mensagens):
+    """Extrai o LR das mensagens: 'slice(a, b, None)' ou um valor único."""
+    m = re.search(r"Learning Rate\s*-\s*slice\(([\d.eE+-]+),\s*([\d.eE+-]+)", mensagens)
+    if m:
+        return {"tipo": "slice", "min": float(m.group(1)), "max": float(m.group(2))}
+    m = re.search(r"Learning Rate\s*-\s*([\d.eE+-]+)", mensagens)
+    if m:
+        return {"tipo": "valor", "valor": float(m.group(1))}
+    return None
+
+
+def falta_memoria(mensagens):
+    texto = mensagens.lower()
+    return any(e in texto for e in ERROS_MEMORIA)
+
+
+def treinar(nome, p, ambiente):
+    n_chips = contar_chips(p["pasta"])
+    epocas = 1 if MODO_TESTE else p.get("epocas", EPOCAS)
+    paragem = "CONTINUE_TRAINING" if MODO_TESTE else PARAGEM
+    sufixo = "teste" if MODO_TESTE else "treino"
+
+    for batch in p["batches"]:
+        saida = os.path.join(PASTA_MODELOS, f"{nome}_b{batch}_lrauto_{sufixo}_{carimbo()}")
+        registo = saida + "_registo"
+        os.makedirs(registo, exist_ok=True)
+
+        parametros = {
+            "experiencia": nome,
+            "modo_teste": MODO_TESTE,
+            "pasta_treino": p["pasta"],
+            "n_chips": n_chips,
+            "max_epocas": epocas,
+            "paragem": paragem,
+            "monitor": MONITOR,
+            "validacao_pct": VALIDACAO,
+            "batch": batch,
+            "chip": CHIP,
+            "model_type": p["model_type"],
+            "backbone_model": p["backbone_model"],
+            "arguments": p["arguments"],
+            "learning_rate": p["learning_rate"] or "automatico",
+            "bandas": bandas_chips(p["pasta"]),
+            "comparar_com": os.path.basename(MODELOS_4B.get(nome, "")),
+            "n_chips_4_bandas": parametros_4_bandas(nome).get("n_chips"),
+            "ambiente": ambiente,
+        }
+        with open(os.path.join(registo, "parametros.json"), "w", encoding="utf-8") as fh:
+            json.dump(parametros, fh, indent=2, ensure_ascii=False)
+
+        print(f"\n=== {nome} | {n_chips} chips | batch={batch} | épocas<={epocas} | lr=automático "
+              f"| paragem={paragem} === ({agora()})")
+        inicio, t0, estado = agora(), time.time(), "concluido"
+        try:
+            arcpy.ia.TrainDeepLearningModel(
+                in_folder=p["pasta"],
+                out_folder=saida,
+                max_epochs=epocas,
+                model_type=p["model_type"],
+                batch_size=batch,
+                arguments=p["arguments"],
+                learning_rate=p["learning_rate"],
+                backbone_model=p["backbone_model"],
+                validation_percentage=VALIDACAO,
+                stop_training=paragem,
+                freeze="FREEZE_MODEL",
+                augmentation="DEFAULT",
+                chip_size=CHIP,
+                monitor=MONITOR,
+                tensorboard="ENABLE_TENSORBOARD",
+            )
+        except arcpy.ExecuteError:
+            estado = "erro"
+        duracao = (time.time() - t0) / 60
+
+        mensagens = arcpy.GetMessages()
+        with open(os.path.join(registo, "mensagens.txt"), "w", encoding="utf-8") as fh:
+            fh.write(mensagens)
+        print(mensagens)
+
+        lr = lr_encontrado(mensagens)
+        resumo = {
+            "experiencia": nome,
+            "modo_teste": MODO_TESTE,
+            "estado": estado,
+            "batch": batch,
+            "inicio": inicio,
+            "fim": agora(),
+            "duracao_min": round(duracao, 1),
+            "lr_encontrado": lr,
+            "pasta_modelo": saida,
+            "emd": ler_emd(saida),
+        }
+        with open(os.path.join(registo, "resumo.json"), "w", encoding="utf-8") as fh:
+            json.dump(resumo, fh, indent=2, ensure_ascii=False)
+
+        print(f"{estado.upper()} em {duracao:.1f} min | LR encontrado: {lr} -> {saida}")
+        if MODO_TESTE and estado == "concluido":
+            print(f"  (teste) tempo de 1 época com batch {batch}: {duracao:.0f} min "
+                  f"-> {EPOCAS} épocas no máximo: ~{duracao * EPOCAS / 60:.1f} h")
+
+        if estado == "erro" and falta_memoria(mensagens):
+            print(f"  memória insuficiente com batch {batch}; a tentar o seguinte")
+            continue
+        return resumo
+
+    return resumo   # último resultado, se todos os batches falharam
+
+
+# ---------------------------------------------------------------------------
+os.makedirs(PASTA_MODELOS, exist_ok=True)
+ambiente = info_ambiente()
+print(f"Modo teste: {MODO_TESTE}")
+ATIVAS = {n: p for n, p in EXPERIENCIAS.items() if p["ativo"]}
+if not ATIVAS:
+    raise SystemExit("Nenhuma experiência ativa: pôr ativo=True nas que se quer treinar.")
+
+PRONTAS = {}
+for n, p in ATIVAS.items():
+    chips = contar_chips(p["pasta"])
+    pares, falta = validar_pasta(p["pasta"])
+    if not chips:
+        print(f"  SALTADA {n}: sem chips em {p['pasta']} (exportação em falta?)")
+    elif falta:
+        print(f"  SALTADA {n}: {len(falta)} ficheiros do map.txt em falta (ex.: {falta[:3]})")
+    elif bandas_chips(p["pasta"]) != N_BANDAS:
+        print(f"  SALTADA {n}: os chips têm {bandas_chips(p['pasta'])} bandas (esperadas {N_BANDAS}); "
+              "exportados do ortomosaico errado?")
+    else:
+        print(f"  {n}: {chips} chips, {pares} pares em {p['pasta']}")
+        p4 = parametros_4_bandas(n)
+        if not p4:
+            print(f"    (sem parametros.json do MTRE de 4 bandas em {MODELOS_4B.get(n)}_registo)")
+        else:
+            atuais = {"max_epocas": p.get("epocas", EPOCAS), "batch": p["batches"][0], "chip": CHIP,
+                      "arguments": p["arguments"], "validacao_pct": VALIDACAO, "monitor": MONITOR}
+            diferentes = [k for k, v in atuais.items() if k in p4 and str(p4[k]) != str(v)]
+            print(f"    MTRE de 4 bandas: {p4.get('n_chips')} chips"
+                  + (" (iguais)" if p4.get("n_chips") == chips else "  ATENÇÃO: n.º de chips diferente")
+                  + (f" | parâmetros diferentes: {', '.join(diferentes)}" if diferentes else " | mesmos parâmetros"))
+        PRONTAS[n] = p
+if not PRONTAS:
+    raise SystemExit("Nenhuma experiência com dados válidos.")
+print(f"Experiências a treinar: {', '.join(PRONTAS)}")
+
+resumos = [treinar(n, p, ambiente) for n, p in PRONTAS.items()]
+
+csv_path = os.path.join(PASTA_MODELOS, "resumo_treinos.csv")
+novo = not os.path.exists(csv_path)
+with open(csv_path, "a", newline="", encoding="utf-8-sig") as fh:
+    w = csv.writer(fh, delimiter=";")
+    if novo:
+        w.writerow(["experiencia", "modo_teste", "estado", "batch", "inicio", "fim",
+                    "duracao_min", "lr_min", "lr_max", "chip", "pasta_modelo"])
+    for r in resumos:
+        lr = r["lr_encontrado"] or {}
+        lr_min = lr.get("min", lr.get("valor", ""))
+        lr_max = lr.get("max", lr.get("valor", ""))
+        w.writerow([r["experiencia"], r["modo_teste"], r["estado"], r["batch"],
+                    r["inicio"], r["fim"], r["duracao_min"], lr_min, lr_max,
+                    CHIP, r["pasta_modelo"]])
+print(f"\nResumo -> {csv_path}")

@@ -4,8 +4,10 @@ MTRE_nDSM/99_esperar_e_correr_ferrovia.py
 
 Espera que o treino do MTRE da rede viária com nDSM (43_Treino_RViaria_ndsm.py, já a
 decorrer) termine e, a seguir, corre uma LISTA de scripts, um de cada vez, pela ordem
-indicada: o treino do MTRE da ferrovia com nDSM (os chips da ferrovia já foram
-exportados pelo 42). Assim a GPU nunca é usada por dois processos ao mesmo tempo.
+indicada. Assim a GPU nunca é usada por dois processos ao mesmo tempo. Lista atual:
+  1. 1_Construcoes\08_treinar_modelos_RGB.py teste  (resultado necessário primeiro)
+  2. MTRE_nDSM\43_Treino_RViaria_ndsm.py           (MTRE da ferrovia com nDSM; os chips
+                                                    já foram exportados pelo 42)
 
 O fim do treino é detetado pelos processos: ao arrancar, o script lê no nvidia-smi
 os python.exe que estão a usar a GPU (ou usa os PID indicados em PIDS_TREINO) e
@@ -19,7 +21,7 @@ Antes de esperar, confirma que:
   - o 43 que vai correr tem a experiência da ferrovia com ativo=True, a da rede viária
     com ativo=False e MODO_TESTE = False (a versão nova do 43, não a que está a treinar).
 
-Cada script corre com o mesmo Python e na sua própria pasta. O resultado de cada um
+Cada script corre com o mesmo Python, na sua própria pasta e com os argumentos indicados. O resultado de cada um
 (início, fim, duração e se correu bem) fica registado no ecrã e em LOG_CADEIA.
 
 Correr numa SEGUNDA janela do Python Command Prompt, com o treino a decorrer na outra:
@@ -40,13 +42,15 @@ PASTA_MODELOS = r"D:\DL\Modelos\126_RViaria_nDSM"     # onde fica o registo da c
 # quando este script arranca (ver com nvidia-smi). Ex.: PIDS_TREINO = [6200]
 PIDS_TREINO = None
 
-# Scripts a correr depois do fim do treino, por esta ordem
+# Scripts a correr depois do fim do treino, por esta ordem: (caminho, [argumentos])
 SCRIPTS = [
-    os.path.join(PASTA, "43_Treino_RViaria_ndsm.py"),    # treina o MTRE da ferrovia
+    (r"D:\Users\Cap_Almeida\Projeto\Python\1_Construcoes\08_treinar_modelos_RGB.py", ["teste"]),
+    (os.path.join(PASTA, "43_Treino_RViaria_ndsm.py"), []),      # treina o MTRE da ferrovia
 ]
 
 # Se um script falhar: True = continua com o seguinte; False = para a cadeia.
-CONTINUAR_SE_FALHAR = False
+# Os dois scripts são independentes: se o treino RGB falhar, a ferrovia corre na mesma.
+CONTINUAR_SE_FALHAR = True
 
 INTERVALO_S = 60           # verifica de minuto a minuto (só consulta a lista de processos)
 MEMORIA_LIVRE_MB = 2000    # memória da GPU usada abaixo da qual a GPU é dada como livre
@@ -105,7 +109,7 @@ def memoria_usada_mb():
 
 def verificar_43():
     """Confirma que o 43 a correr é a versão com a ferrovia. Devolve a lista de problemas."""
-    script = next((s for s in SCRIPTS if os.path.basename(s).startswith("43_")), None)
+    script = next((s for s, _ in SCRIPTS if os.path.basename(s).startswith("43_")), None)
     if not script:
         return []
     with open(script, encoding="utf-8", errors="ignore") as f:
@@ -135,7 +139,7 @@ def verificar_43():
 
 def main():
     # confirmar logo no início (para não esperar horas em vão)
-    em_falta = [s for s in SCRIPTS if not os.path.exists(s)]
+    em_falta = [s for s, _ in SCRIPTS if not os.path.exists(s)]
     if em_falta:
         print("ERRO: estes scripts não existem:\n  " + "\n  ".join(em_falta))
         return
@@ -156,7 +160,8 @@ def main():
         print(f"ERRO: os processos {pids} não existem (PID errado?).")
         return
     registo(f"À espera do fim dos processos python.exe {vivos} (treino em curso). "
-            f"Depois corre(m) {len(SCRIPTS)} script(s): {', '.join(os.path.basename(s) for s in SCRIPTS)}.")
+            f"Depois corre(m) {len(SCRIPTS)} script(s): "
+            f"{', '.join(' '.join([os.path.basename(s)] + a) for s, a in SCRIPTS)}.")
     n = 0
     while vivos:
         time.sleep(INTERVALO_S)
@@ -180,11 +185,11 @@ def main():
         time.sleep(30)
     time.sleep(ESPERA_FINAL_S)
 
-    for i, script in enumerate(SCRIPTS, 1):
-        nome = os.path.basename(script)
+    for i, (script, args) in enumerate(SCRIPTS, 1):
+        nome = " ".join([os.path.basename(script)] + list(args))
         registo(f"[{i}/{len(SCRIPTS)}] INÍCIO {nome}")
         t0 = time.time()
-        res = subprocess.run([sys.executable, script], cwd=os.path.dirname(script))
+        res = subprocess.run([sys.executable, script] + list(args), cwd=os.path.dirname(script))
         horas = (time.time() - t0) / 3600
         if res.returncode == 0:
             registo(f"[{i}/{len(SCRIPTS)}] FIM {nome} | correu bem | {horas:.2f} h")

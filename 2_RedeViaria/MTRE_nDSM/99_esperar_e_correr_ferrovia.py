@@ -7,10 +7,12 @@ decorrer) termine e, a seguir, corre uma LISTA de scripts, um de cada vez, pela 
 indicada: o treino do MTRE da ferrovia com nDSM (os chips da ferrovia já foram
 exportados pelo 42). Assim a GPU nunca é usada por dois processos ao mesmo tempo.
 
-O fim do treino é detetado pelo resumo_treinos.csv da pasta dos modelos: o 43 só
-cria esse ficheiro, ou lhe acrescenta linhas, quando termina todas as experiências.
-Quando o número de linhas aumenta (ou o ficheiro aparece), começam a correr os
-scripts da lista.
+O fim do treino é detetado pelos processos: ao arrancar, o script lê no nvidia-smi
+os python.exe que estão a usar a GPU (ou usa os PID indicados em PIDS_TREINO) e
+espera que TODOS terminem. Depois espera que a memória da GPU fique livre (abaixo de
+MEMORIA_LIVRE_MB) e só então corre os scripts da lista. Se a memória não ficar livre
+em ESPERA_MEMORIA_MAX_MIN minutos, não lança nada (o 43 cairia para lote 4 e o
+treino deixaria de ser comparável com o de 4 bandas).
 
 Antes de esperar, confirma que:
   - os scripts da lista existem;
@@ -32,7 +34,11 @@ from datetime import datetime
 
 # =============================== CONFIGURAÇÃO ===============================
 PASTA = os.path.dirname(os.path.abspath(__file__))          # pasta MTRE_nDSM
-RESUMO_TREINOS = r"D:\DL\Modelos\126_RViaria_nDSM\resumo_treinos.csv"
+PASTA_MODELOS = r"D:\DL\Modelos\126_RViaria_nDSM"     # onde fica o registo da cadeia
+
+# PID dos processos a esperar. None = automático: os python.exe que estão a usar a GPU
+# quando este script arranca (ver com nvidia-smi). Ex.: PIDS_TREINO = [6200]
+PIDS_TREINO = None
 
 # Scripts a correr depois do fim do treino, por esta ordem
 SCRIPTS = [
@@ -42,9 +48,11 @@ SCRIPTS = [
 # Se um script falhar: True = continua com o seguinte; False = para a cadeia.
 CONTINUAR_SE_FALHAR = False
 
-INTERVALO_S = 600          # verifica de 10 em 10 minutos
-ESPERA_FINAL_S = 120       # margem depois do fim do treino, para a GPU libertar a memória
-LOG_CADEIA = os.path.join(os.path.dirname(RESUMO_TREINOS), "log_cadeia_scripts.txt")
+INTERVALO_S = 60           # verifica de minuto a minuto (só consulta a lista de processos)
+MEMORIA_LIVRE_MB = 2000    # memória da GPU usada abaixo da qual a GPU é dada como livre
+ESPERA_MEMORIA_MAX_MIN = 30
+ESPERA_FINAL_S = 120       # margem final antes de lançar o primeiro script
+LOG_CADEIA = os.path.join(PASTA_MODELOS, "log_cadeia_scripts.txt")
 # ============================================================================
 
 
@@ -55,12 +63,44 @@ def registo(msg):
         f.write(linha + "\n")
 
 
-def n_linhas():
-    """Linhas (não vazias) do resumo_treinos.csv; 0 se ainda não existir."""
-    if not os.path.exists(RESUMO_TREINOS):
-        return 0
-    with open(RESUMO_TREINOS, encoding="utf-8-sig", errors="ignore") as f:
-        return sum(1 for linha in f if linha.strip())
+def correr(cmd):
+    """Saída de um comando ('' se falhar)."""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, errors="ignore", timeout=60).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def pids_python_gpu():
+    """PID dos python.exe (exceto este) que estão a usar a GPU, segundo o nvidia-smi."""
+    pids = set()
+    for linha in correr(["nvidia-smi", "--query-compute-apps=pid,process_name",
+                         "--format=csv,noheader"]).splitlines():
+        partes = [x.strip() for x in linha.split(",")]
+        if len(partes) >= 2 and partes[0].isdigit() and "python" in partes[1].lower():
+            pids.add(int(partes[0]))
+    if not pids:   # em modo WDDM a consulta pode vir vazia: ler a tabela "Processes"
+        for linha in correr(["nvidia-smi"]).splitlines():
+            m = re.match(r"^\|\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(C|C\+G)\s+(\S+)", linha)
+            if m and "python" in m.group(3).lower():
+                pids.add(int(m.group(1)))
+    pids.discard(os.getpid())
+    return sorted(pids)
+
+
+def vivo(pid):
+    """True se o processo com este PID ainda existe."""
+    saida = correr(["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"])
+    return f'"{pid}"' in saida
+
+
+def memoria_usada_mb():
+    """Memória usada na GPU 0 (MB), ou None se o nvidia-smi não responder."""
+    saida = correr(["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"]).strip()
+    try:
+        return int(saida.splitlines()[0])
+    except (ValueError, IndexError):
+        return None
 
 
 def verificar_43():
@@ -99,22 +139,45 @@ def main():
     if em_falta:
         print("ERRO: estes scripts não existem:\n  " + "\n  ".join(em_falta))
         return
-    if not os.path.isdir(os.path.dirname(RESUMO_TREINOS)):
-        print(f"ERRO: a pasta dos modelos não existe: {os.path.dirname(RESUMO_TREINOS)}")
+    if not os.path.isdir(PASTA_MODELOS):
+        print(f"ERRO: a pasta dos modelos não existe: {PASTA_MODELOS}")
         return
     problemas = verificar_43()
     if problemas:
         print("ERRO no 43:\n  " + "\n  ".join(problemas))
         return
 
-    inicial = n_linhas()
-    estado = f"{inicial} linhas" if os.path.exists(RESUMO_TREINOS) else "ainda não existe"
-    registo(f"À espera do fim do treino da rede viária ({os.path.basename(RESUMO_TREINOS)}: {estado}). "
+    pids = PIDS_TREINO or pids_python_gpu()
+    if not pids:
+        print("ERRO: nenhum python.exe a usar a GPU no nvidia-smi. Indicar o PID do treino em PIDS_TREINO.")
+        return
+    vivos = [p for p in pids if vivo(p)]
+    if not vivos:
+        print(f"ERRO: os processos {pids} não existem (PID errado?).")
+        return
+    registo(f"À espera do fim dos processos python.exe {vivos} (treino em curso). "
             f"Depois corre(m) {len(SCRIPTS)} script(s): {', '.join(os.path.basename(s) for s in SCRIPTS)}.")
-    while n_linhas() <= inicial:
+    n = 0
+    while vivos:
         time.sleep(INTERVALO_S)
-        print(f"[{datetime.now():%Y-%m-%d %H:%M}] treino ainda a decorrer", flush=True)
-    registo(f"Treino terminado. Primeiro script dentro de {ESPERA_FINAL_S} s.")
+        vivos = [p for p in vivos if vivo(p)]
+        n += 1
+        if vivos and n % 30 == 0:      # de meia em meia hora, para não encher o ecrã
+            print(f"[{datetime.now():%Y-%m-%d %H:%M}] treino ainda a decorrer (PID {vivos})", flush=True)
+    registo("Processos do treino terminados. A confirmar que a memória da GPU ficou livre.")
+
+    t0 = time.time()
+    while True:
+        mem = memoria_usada_mb()
+        outros = pids_python_gpu()
+        if mem is not None and mem < MEMORIA_LIVRE_MB and not outros:
+            registo(f"GPU livre ({mem} MB usados). Primeiro script dentro de {ESPERA_FINAL_S} s.")
+            break
+        if time.time() - t0 > ESPERA_MEMORIA_MAX_MIN * 60:
+            registo(f"GPU ainda ocupada ao fim de {ESPERA_MEMORIA_MAX_MIN} min ({mem} MB usados, "
+                    f"python.exe na GPU: {outros or 'nenhum'}). Nada foi lançado.")
+            return
+        time.sleep(30)
     time.sleep(ESPERA_FINAL_S)
 
     for i, script in enumerate(SCRIPTS, 1):

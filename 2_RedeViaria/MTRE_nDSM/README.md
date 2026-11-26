@@ -33,7 +33,7 @@ Os scripts confirmam esta equivalência a partir do `parametros.json` do registo
 
 O teste da rede viária (26/11/2026) confirmou que o MTRE aceita as 5 bandas; a ferrovia pode ir diretamente para o treino real.
 
-Para a ferrovia começar sozinha quando o treino da rede viária terminar, correr `MTRE_nDSM/99_esperar_e_correr_ferrovia.py` numa segunda janela do Python Command Prompt. Deteta o fim do treino pelo `resumo_treinos.csv` e corre a seguir o 42 (exporta a ferrovia) e o 43 (treina a ferrovia). Antes de esperar, confirma que o 43 tem a ferrovia com `ativo=True`, a rede viária com `ativo=False` e `MODO_TESTE = False`.
+Para a ferrovia começar sozinha quando o treino da rede viária terminar, correr `MTRE_nDSM/99_esperar_e_correr_ferrovia.py` numa segunda janela do Python Command Prompt. Deteta o fim do treino pelo `resumo_treinos.csv` (que o 43 só cria ou atualiza no fim) e corre a seguir o 43, que treina a ferrovia; os chips da ferrovia já têm de estar exportados pelo 42. Antes de esperar, confirma que o 43 tem a ferrovia com `ativo=True`, a rede viária com `ativo=False` e `MODO_TESTE = False`.
 
 ## Avaliação
 

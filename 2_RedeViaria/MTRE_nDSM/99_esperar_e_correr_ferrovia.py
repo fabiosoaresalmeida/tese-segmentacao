@@ -4,12 +4,13 @@ MTRE_nDSM/99_esperar_e_correr_ferrovia.py
 
 Espera que o treino do MTRE da rede viária com nDSM (43_Treino_RViaria_ndsm.py, já a
 decorrer) termine e, a seguir, corre uma LISTA de scripts, um de cada vez, pela ordem
-indicada: a exportação dos chips da ferrovia com nDSM e o treino do MTRE da ferrovia.
-Assim a GPU nunca é usada por dois processos ao mesmo tempo.
+indicada: o treino do MTRE da ferrovia com nDSM (os chips da ferrovia já foram
+exportados pelo 42). Assim a GPU nunca é usada por dois processos ao mesmo tempo.
 
 O fim do treino é detetado pelo resumo_treinos.csv da pasta dos modelos: o 43 só
-acrescenta linhas a esse ficheiro quando termina todas as experiências. Quando o
-número de linhas aumenta, começam a correr os scripts da lista.
+cria esse ficheiro, ou lhe acrescenta linhas, quando termina todas as experiências.
+Quando o número de linhas aumenta (ou o ficheiro aparece), começam a correr os
+scripts da lista.
 
 Antes de esperar, confirma que:
   - os scripts da lista existem;
@@ -35,12 +36,10 @@ RESUMO_TREINOS = r"D:\DL\Modelos\126_RViaria_nDSM\resumo_treinos.csv"
 
 # Scripts a correr depois do fim do treino, por esta ordem
 SCRIPTS = [
-    os.path.join(PASTA, "42_Export_RViaria_ndsm.py"),    # exporta a ferrovia (a rede viária é saltada)
     os.path.join(PASTA, "43_Treino_RViaria_ndsm.py"),    # treina o MTRE da ferrovia
 ]
 
 # Se um script falhar: True = continua com o seguinte; False = para a cadeia.
-# Se a exportação falhar, o treino não tem chips da ferrovia: por isso False.
 CONTINUAR_SE_FALHAR = False
 
 INTERVALO_S = 600          # verifica de 10 em 10 minutos
@@ -109,8 +108,9 @@ def main():
         return
 
     inicial = n_linhas()
-    registo(f"À espera do fim do treino da rede viária ({inicial} linhas em "
-            f"{os.path.basename(RESUMO_TREINOS)}). Depois correm {len(SCRIPTS)} scripts.")
+    estado = f"{inicial} linhas" if os.path.exists(RESUMO_TREINOS) else "ainda não existe"
+    registo(f"À espera do fim do treino da rede viária ({os.path.basename(RESUMO_TREINOS)}: {estado}). "
+            f"Depois corre(m) {len(SCRIPTS)} script(s): {', '.join(os.path.basename(s) for s in SCRIPTS)}.")
     while n_linhas() <= inicial:
         time.sleep(INTERVALO_S)
         print(f"[{datetime.now():%Y-%m-%d %H:%M}] treino ainda a decorrer", flush=True)

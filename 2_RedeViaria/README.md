@@ -127,34 +127,48 @@ Eixos, TOTAL das 3 ortos de teste, tolerância de 3 m:
 | União MTRE + U-Net | bruto | 0,618 | 0,829 | 0,546 |
 | União MTRE + U-Net | pos | 0,613 | 0,834 | 0,541 |
 | União MTRE + U-Net | centerline | 0,594 | 0,832 | 0,526 |
-| MTRE ferrovia | bruto | 0,564 | 0,077 | 0,068 |
-| MTRE ferrovia | pos | 0,559 | 0,069 | 0,061 |
-| MTRE ferrovia | centerline | 0,572 | 0,152 | 0,137 |
+| MTRE ferrovia ¹ | bruto | 0,564 | 0,161 | 0,143 |
+| MTRE ferrovia ¹ | pos | 0,559 | 0,179 | 0,157 |
+| MTRE ferrovia ¹ | centerline | 0,572 | 0,152 | 0,137 |
 
-### MTRE com nDSM (`Resultados/MTRE_nDSM/*_20261127_094335.*`)
+¹ Valores da corrida corrigida `MTRE_nDSM/*_20261127_111650.*` (ver abaixo). Na corrida
+`20261103_101943` a correctness da ferrovia em `bruto` e `pos` estava subestimada (0,077 e
+0,069), por causa da falha do `PairwiseClip` corrigida no 44. A rede viária não foi afetada:
+os valores do MTRE são iguais nas duas corridas.
+
+### MTRE com nDSM (`Resultados/MTRE_nDSM/*_20261127_111650.*`)
 
 Corrida do 44 com os MTRE de 4 bandas e os MTRE com nDSM (5 bandas), para a rede viária e
-para a ferrovia. `comparacao_ndsm_<corrida>.csv` tem a diferença nDSM − 4 bandas.
+para a ferrovia, já com a correção do recorte em `medir()`. `comparacao_<corrida>.csv` tem a
+diferença nDSM − 4 bandas.
 
 Eixos, TOTAL das 3 ortos de teste, tolerância de 3 m:
 
 | Modelo | Versão | Completeness | Correctness | Quality |
 |---|---|---|---|---|
+| MTRE rede viária (4 bandas) | bruto | 0,617 | 0,829 | 0,545 |
+| MTRE rede viária (nDSM) | bruto | 0,663 | 0,807 | 0,570 |
 | MTRE rede viária (4 bandas) | pos | 0,611 | 0,835 | 0,540 |
 | MTRE rede viária (nDSM) | pos | 0,659 | 0,814 | 0,568 |
 | MTRE rede viária (4 bandas) | centerline | 0,598 | 0,828 | 0,528 |
-| MTRE rede viária (nDSM) | centerline | 0,657 | 0,806 | 0,564 |
+| MTRE rede viária (nDSM) | centerline | 0,657 | 0,807 | 0,564 |
+| MTRE ferrovia (4 bandas) | bruto | 0,564 | 0,161 | 0,143 |
+| MTRE ferrovia (nDSM) | bruto | 0,564 | 0,171 | 0,151 |
+| MTRE ferrovia (4 bandas) | pos | 0,559 | 0,179 | 0,157 |
+| MTRE ferrovia (nDSM) | pos | 0,562 | 0,184 | 0,161 |
 | MTRE ferrovia (4 bandas) | centerline | 0,572 | 0,152 | 0,137 |
-| MTRE ferrovia (nDSM) | centerline | 0,583 | 0,146 | 0,131 |
+| MTRE ferrovia (nDSM) | centerline | 0,581 | 0,159 | 0,143 |
 
-- Rede viária: com o nDSM, a quality sobe em todas as folhas, versões e tolerâncias. O ganho
-  vem sobretudo dos caminhos carreteiros e dos caminhos a pé (+8 pp de completeness). As
-  métricas por pixel descem ligeiramente (IoU da via de 0,180 para 0,168), porque as
-  máscaras ficam mais largas.
-- Ferrovia: sem diferença relevante.
-- A correctness da ferrovia é 0 nalgumas combinações com completeness elevada (`bruto` e
-  `pos` na 126-III-4, `bruto` nDSM na 126-I-2). É um resultado impossível, que aponta para
-  uma falha do `PairwiseClip` da extração em `medir()`, e não um resultado do modelo.
+- Rede viária: com o nDSM, a quality sobe em todas as folhas, versões e tolerâncias
+  (+2,5 a +3,6 pp a 3 m). O ganho vem sobretudo dos caminhos carreteiros e dos caminhos a pé
+  (cerca de +8 pp de completeness). As métricas por pixel descem ligeiramente (IoU da via de
+  0,180 para 0,168 em `pos`), porque as máscaras ficam mais largas.
+- Ferrovia: sem diferença relevante (+0,4 a +0,8 pp de quality). A melhor versão é `pos`.
+- Correção do recorte: o `PairwiseClip` da extração perdia, sem erro, parte das linhas do
+  Raster to Polyline (`bruto` e `pos`), o que dava correctness = 0 ou subestimada na
+  ferrovia. Com `RepairGeometry` antes do recorte (`recortar_linhas()` no 44, 46 e nas
+  avaliações das cartas 113 e 235), os valores ficam corretos. A rede viária não mudou.
+  Pequenas diferenças no `centerline` entre corridas (≤ 0,002) vêm do Polygon to Centerline.
 
 ## Figuras (45)
 

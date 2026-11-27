@@ -460,6 +460,35 @@ def metricas_pixel(c):
                 f1_via=f1, iou_via=iou_via, iou_fundo=iou_fundo, miou=miou)
 
 
+def recortar_linhas(linhas, poligono, saida):
+    """Recorta linhas por um polígono e devolve o comprimento (m) dentro dele.
+
+    O PairwiseClip pode devolver uma saída vazia, sem erro, com linhas de geometria
+    problemática (laços, segmentos degenerados), o que dava correctness = 0 com
+    completeness elevada. Por isso: repara uma cópia das linhas, recorta com o
+    PairwiseClip e, se vier vazio, repete com o Clip clássico e, em último caso,
+    com a interseção direta das geometrias.
+    """
+    rep = saida + "_rep"
+    arcpy.management.CopyFeatures(linhas, rep)
+    arcpy.management.RepairGeometry(rep, "DELETE_NULL")
+    arcpy.analysis.PairwiseClip(rep, poligono, saida)
+    comp = comprimento(saida)
+    if comp == 0:
+        arcpy.management.Delete(saida)
+        arcpy.analysis.Clip(rep, poligono, saida)
+        comp = comprimento(saida)
+        if comp == 0:
+            with arcpy.da.SearchCursor(poligono, ["SHAPE@"]) as cur:
+                pols = [r[0] for r in cur if r[0]]
+            with arcpy.da.SearchCursor(rep, ["SHAPE@"]) as cur:
+                comp = sum(g.intersect(pol, 2).length for (g,) in cur if g for pol in pols)
+        if comp > 0:
+            log(f"      aviso: o PairwiseClip devolveu vazio; recorte repetido ({comp / 1000:.3f} km)")
+    arcpy.management.Delete(rep)
+    return comp
+
+
 def medir(ref, ext, tol, chaves):
     """Comprimentos (m) para as métricas de Wiedemann com tolerância tol."""
     l_ref, l_ext = comprimento(ref), comprimento(ext)
@@ -470,11 +499,15 @@ def medir(ref, ext, tol, chaves):
         arcpy.analysis.PairwiseBuffer(ext, b_ext, f"{tol} Meters", "ALL")
         arcpy.analysis.PairwiseBuffer(ref, b_ref, f"{tol} Meters", "ALL")
         arcpy.analysis.PairwiseClip(ref, b_ext, r_ok)
-        arcpy.analysis.PairwiseClip(ext, b_ref, e_ok)
-        l_ref_ok, l_ext_ok = comprimento(r_ok), comprimento(e_ok)
+        l_ref_ok = comprimento(r_ok)
+        l_ext_ok = recortar_linhas(ext, b_ref, e_ok)
         por_classe_ok = comprimento(r_ok, CAMPO_SOURCE, chaves)
+        # Com a mesma tolerância, se há referência coberta tem de haver extração coberta
+        if l_ref_ok > 0 and l_ext_ok == 0:
+            log(f"      AVISO: completeness > 0 e correctness = 0 a {tol} m (resultado impossível)")
         for fc in (b_ext, b_ref, r_ok, e_ok):
-            arcpy.management.Delete(fc)
+            if arcpy.Exists(fc):
+                arcpy.management.Delete(fc)
     return dict(l_ref=l_ref, l_ext=l_ext, l_ref_ok=l_ref_ok, l_ext_ok=l_ext_ok,
                 ref_classe=comprimento(ref, CAMPO_SOURCE, chaves),
                 ok_classe=por_classe_ok)

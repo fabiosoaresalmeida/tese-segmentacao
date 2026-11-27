@@ -1,0 +1,48 @@
+{
+  "corrida": "20261127_094335",
+  "modo_teste": false,
+  "versoes": [
+    "bruto",
+    "pos",
+    "centerline"
+  ],
+  "tolerancias": [
+    2.0,
+    3.0,
+    5.0
+  ],
+  "espessura_max": 20.0,
+  "troco_min": 10.0,
+  "margem_espelho_m": 32.0,
+  "janela_suave": 3,
+  "abertura_px": 1,
+  "area_min_m2": 50.0,
+  "buraco_max_m2": 8.0,
+  "dangle_m": 15.0,
+  "travessa_max_m": 20.0,
+  "angulo_travessa": 30.0,
+  "colinear_min": 150.0,
+  "suave_m": 12.0,
+  "extender_m": 20.0,
+  "simplificar_m": 1.0,
+  "batch_inferencia": 2,
+  "padding_max": 128,
+  "modelos": {
+    "mtre_rede_viaria": {
+      "pasta": "D:\\DL\\Modelos\\126_RViaria\\mtre_rede_viaria_resnet50_b8_lrauto_treino_20261016_1137",
+      "mosaico": null
+    },
+    "mtre_rede_viaria_ndsm": {
+      "pasta": "D:\\DL\\Modelos\\126_RViaria_nDSM\\mtre_rede_viaria_ndsm_resnet50_b8_lrauto_treino_20261126_1339",
+      "mosaico": "D:\\Users\\Cap_Almeida\\Projeto\\126\\Ortomosaico\\126_ndsm\\126_nDSM_5bandas_v2.tif"
+    },
+    "mtre_ferrovia_ndsm": {
+      "pasta": "D:\\DL\\Modelos\\126_RViaria_nDSM\\mtre_ferrovia_ndsm_resnet50_b8_lrauto_treino_20261127_0634",
+      "mosaico": "D:\\Users\\Cap_Almeida\\Projeto\\126\\Ortomosaico\\126_ndsm\\126_nDSM_5bandas_v2.tif"
+    },
+    "mtre_ferrovia": {
+      "pasta": "D:\\DL\\Modelos\\126_RViaria\\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
+      "mosaico": null
+    }
+  }
+}

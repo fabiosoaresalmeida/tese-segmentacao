@@ -23,7 +23,10 @@ import importlib.util
 PROJETO = r"D:\Users\Cap_Almeida\Projeto"
 PYTHON = os.path.join(PROJETO, "Python")
 # onde procurar os scripts originais (por esta ordem)
-PASTAS_SCRIPTS = [os.path.join(PYTHON, "1_Construcoes"), PYTHON, os.path.join(PYTHON, "5_Carta_235")]
+_CONSTR = os.path.join(PYTHON, "1_Construcoes")
+PASTAS_SCRIPTS = [os.path.join(_CONSTR, "1_4bandas_NIR"),          # 07, 08 (4 bandas)
+                  os.path.join(_CONSTR, "4_Avaliacao_Figuras"),    # 09
+                  _CONSTR, PYTHON, os.path.join(PYTHON, "5_Carta_235")]
 
 # modelos
 PASTA_MODELOS_NIR = r"D:\DL\Modelos\126_construcoes"                      # fase A, 4 bandas

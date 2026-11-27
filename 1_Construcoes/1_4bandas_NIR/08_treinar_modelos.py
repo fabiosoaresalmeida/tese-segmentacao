@@ -58,7 +58,7 @@ LR     = 0.0002        # fixo: o calculo automatico revelou-se pouco reprodutive
 # Experiencias: (ATIVO, tipo de modelo, backbone, batch sizes a tentar por ordem,
 #                argumentos, learning rate, epocas)
 # Ordenadas do mais rapido para o mais lento, para ter resultados cedo.
-# Tempos aproximados por modelo (20 epocas, fase A): entre parenteses.
+# Tempos aproximados por modelo (20 epocas, serie 2): entre parenteses.
 EXPERIENCIAS = [
     (True,  "DEEPLAB", "RESNET34",  [8, 4],    ARGS_CNN,     LR, EPOCAS),   # ~3 h
     (True,  "UNET",    "RESNET34",  [8, 4],    ARGS_CNN,     LR, EPOCAS),   # ~4 h

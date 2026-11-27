@@ -108,6 +108,11 @@ campo_source = "source"
 # (a comparação ignora maiúsculas/minúsculas e acentos)
 palavras_excluir = ["campo", "limite", "piscina", "electrica"]
 
+# Campo de classe a acrescentar à saída, com o mesmo valor em todos os polígonos
+# (None = não acrescenta). Se o campo já existir, o valor é substituído.
+campo_classe = "classe"
+valor_classe = 1
+
 # Transformação geográfica a usar se for preciso projetar e os datums forem
 # diferentes. None = escolhida automaticamente (a primeira proposta pelo ArcGIS
 # para a extensão dos dados, normalmente a mais adequada). Para forçar uma
@@ -286,7 +291,20 @@ with arcpy.da.UpdateCursor(output_shp, [campo_source]) as cursor:
 count_palavras = sum(eliminados_por_palavra.values())
 print(f"Polígonos eliminados por palavra-chave: {count_palavras}")
 
+# ============================================================
+# PASSO 5 - Acrescentar o campo de classe com o mesmo valor em todos os polígonos
+# ============================================================
 
+if campo_classe:
+    campos_saida = [f.name.lower() for f in arcpy.ListFields(output_shp)]
+    if campo_classe.lower() in campos_saida:
+        print(f"O campo '{campo_classe}' já existe; o valor vai ser substituído por {valor_classe}.")
+    else:
+        arcpy.management.AddField(output_shp, campo_classe, "SHORT")
+        print(f"Campo '{campo_classe}' criado.")
+    arcpy.management.CalculateField(output_shp, campo_classe, str(valor_classe), "PYTHON3")
+    print(f"Campo '{campo_classe}' = {valor_classe} em todos os polígonos.")
+    
 # ============================================================
 # LIMPEZA
 # ============================================================
@@ -338,6 +356,9 @@ print(f"{'Removidos (fora ou no limite do ortomosaico)':<45}{count_fora:>10}")
 print(f"{'Removidos (palavra-chave no campo source)':<45}{count_palavras:>10}")
 print(f"{'Polígonos finais':<45}{count_final:>10}")
 
+if campo_classe:
+    print(f"{'Campo de classe':<45}{campo_classe + ' = ' + str(valor_classe):>10}")
+    
 # Verificação de consistência
 esperado = count_inicial - count_fora - count_palavras
 if esperado != count_final:

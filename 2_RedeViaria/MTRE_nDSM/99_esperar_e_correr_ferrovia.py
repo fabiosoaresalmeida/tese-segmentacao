@@ -5,7 +5,7 @@ MTRE_nDSM/99_esperar_e_correr_ferrovia.py
 Espera que o treino do MTRE da rede viária com nDSM (43_Treino_RViaria_ndsm.py, já a
 decorrer) termine e, a seguir, corre uma LISTA de scripts, um de cada vez, pela ordem
 indicada. Assim a GPU nunca é usada por dois processos ao mesmo tempo. Lista atual:
-  1. 1_Construcoes\08_treinar_modelos_RGB.py teste  (resultado necessário primeiro)
+  1. 1_Construcoes\3_3bandas_RGB\08_treinar_modelos_RGB.py teste  (resultado necessário primeiro)
   2. MTRE_nDSM\43_Treino_RViaria_ndsm.py           (MTRE da ferrovia com nDSM; os chips
                                                     já foram exportados pelo 42)
 
@@ -44,7 +44,7 @@ PIDS_TREINO = None
 
 # Scripts a correr depois do fim do treino, por esta ordem: (caminho, [argumentos])
 SCRIPTS = [
-    (r"D:\Users\Cap_Almeida\Projeto\Python\1_Construcoes\08_treinar_modelos_RGB.py", ["teste"]),
+    (r"D:\Users\Cap_Almeida\Projeto\Python\1_Construcoes\3_3bandas_RGB\08_treinar_modelos_RGB.py", ["teste"]),
     (os.path.join(PASTA, "43_Treino_RViaria_ndsm.py"), []),      # treina o MTRE da ferrovia
 ]
 

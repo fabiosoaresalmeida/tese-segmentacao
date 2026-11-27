@@ -14,9 +14,6 @@ Entradas do 06_separar_treino_teste.py (zona_teste.shp) e do
 
 Os modelos sao organizados em GRUPOS, cada um com a sua pasta de modelos e o seu
 ortomosaico (por exemplo, fase A com 4 bandas e fase B com 5 bandas, com o nDSM).
-
-Os modelos sao organizados em GRUPOS, cada um com a sua pasta de modelos e o seu
-ortomosaico (por exemplo, fase A com 4 bandas e fase B com 5 bandas, com o nDSM).
 Para cada grupo:
   1. prepara as ortos de teste a partir do ortomosaico do grupo, com uma margem de
      contexto e as bordas exteriores espelhadas (feito uma vez e reutilizado);

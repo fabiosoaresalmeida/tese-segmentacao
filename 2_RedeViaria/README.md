@@ -33,6 +33,7 @@ ambos com backbone ResNet-50.
 ├── 45_figuras_RViaria.py          figuras de comparação visual
 ├── 46_uniao_MTRE_Unet_RViaria.py  avaliação da união MTRE + U-Net
 ├── Resultados/                    CSV e parâmetros das corridas oficiais
+│   └── MTRE_nDSM/                 corrida do 44: MTRE de 4 bandas vs MTRE com nDSM
 └── figuras/                       figuras geradas pelo 45
 ```
 
@@ -129,6 +130,31 @@ Eixos, TOTAL das 3 ortos de teste, tolerância de 3 m:
 | MTRE ferrovia | bruto | 0,564 | 0,077 | 0,068 |
 | MTRE ferrovia | pos | 0,559 | 0,069 | 0,061 |
 | MTRE ferrovia | centerline | 0,572 | 0,152 | 0,137 |
+
+### MTRE com nDSM (`Resultados/MTRE_nDSM/*_20261127_094335.*`)
+
+Corrida do 44 com os MTRE de 4 bandas e os MTRE com nDSM (5 bandas), para a rede viária e
+para a ferrovia. `comparacao_ndsm_<corrida>.csv` tem a diferença nDSM − 4 bandas.
+
+Eixos, TOTAL das 3 ortos de teste, tolerância de 3 m:
+
+| Modelo | Versão | Completeness | Correctness | Quality |
+|---|---|---|---|---|
+| MTRE rede viária (4 bandas) | pos | 0,611 | 0,835 | 0,540 |
+| MTRE rede viária (nDSM) | pos | 0,659 | 0,814 | 0,568 |
+| MTRE rede viária (4 bandas) | centerline | 0,598 | 0,828 | 0,528 |
+| MTRE rede viária (nDSM) | centerline | 0,657 | 0,806 | 0,564 |
+| MTRE ferrovia (4 bandas) | centerline | 0,572 | 0,152 | 0,137 |
+| MTRE ferrovia (nDSM) | centerline | 0,583 | 0,146 | 0,131 |
+
+- Rede viária: com o nDSM, a quality sobe em todas as folhas, versões e tolerâncias. O ganho
+  vem sobretudo dos caminhos carreteiros e dos caminhos a pé (+8 pp de completeness). As
+  métricas por pixel descem ligeiramente (IoU da via de 0,180 para 0,168), porque as
+  máscaras ficam mais largas.
+- Ferrovia: sem diferença relevante.
+- A correctness da ferrovia é 0 nalgumas combinações com completeness elevada (`bruto` e
+  `pos` na 126-III-4, `bruto` nDSM na 126-I-2). É um resultado impossível, que aponta para
+  uma falha do `PairwiseClip` da extração em `medir()`, e não um resultado do modelo.
 
 ## Figuras (45)
 

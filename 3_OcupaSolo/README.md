@@ -2,7 +2,7 @@
 
 Scripts e resultados da segmentação semântica da ocupação do solo (vegetação e água) por deep learning no ArcGIS Pro 3.6, para a produção da carta topográfica 1:25 000.
 
-Foram comparadas quatro arquiteturas (U-Net, DeepLabV3, PSPNet e SAMLoRA), a inferência com e sem *test-time augmentation* (TTA), a adição de uma banda de alturas (nDSM) e vários métodos de *ensemble*:
+Foram comparadas quatro arquiteturas (U-Net, DeepLabV3, PSPNet e SAMLoRA), a inferência com e sem *test-time augmentation* (TTA), a adição de uma banda de alturas (nDSM), a remoção do infravermelho próximo (só RGB) e vários métodos de *ensemble*:
 
 | Experiência | Imagem de entrada | Modelos |
 |---|---|---|
@@ -10,6 +10,8 @@ Foram comparadas quatro arquiteturas (U-Net, DeepLabV3, PSPNet e SAMLoRA), a inf
 | **4 bandas + TTA** | Ortofotografia R, G, B, NIR | os mesmos 4 modelos |
 | **5 bandas (nDSM)** | Ortofotografia + nDSM (MDS − MDT da DGT, 2025) | DeepLabV3 (ResNet-50) e SAMLoRA (ViT-B) |
 | **5 bandas + TTA** | Ortofotografia + nDSM | os mesmos 2 modelos |
+| **3 bandas (RGB)** | Ortofotografia R, G, B (sem o NIR) | DeepLabV3 (ResNet-50) e SAMLoRA (ViT-B) — em curso |
+| **3 bandas + TTA** | Ortofotografia R, G, B | os mesmos 2 modelos — em curso |
 | **Ensemble** | classificações dos modelos de 4 bandas | maioria, ponderado, especialista, maioria + especialista |
 
 ## Classes
@@ -42,6 +44,7 @@ Dois agrupamentos são avaliados sem novo treino:
 | v1 | `SAMLORA/` | 0 (fundo, sem polígonos) | `[8]` | SAMLoRA v1 |
 | v2 – 4 bandas | `UNET/` | 9 (polígonos explícitos) | `[0,8]` | U-Net, DeepLabV3 e PSPNet v2 |
 | v2 – 5 bandas | `nDSM/` | 9 | `[0,8]` | DeepLabV3 e SAMLoRA nDSM |
+| v2 – 3 bandas | `RGB/` | 9 | `[0,8]` | DeepLabV3 e SAMLoRA RGB |
 
 Na v1, as redes com codificador ResNet do ArcGIS tratam o valor 0 como NoData e nunca aprendiam o sem representação; o SAMLoRA aprendia-o. A v2 passou o sem representação para a classe 9 e as redes ResNet foram treinadas de novo. Para o SAMLoRA as duas versões são equivalentes (a mesma área, com outro código), por isso foi mantido o SAMLoRA v1, avaliado com a conversão das previsões 0 → 9.
 
@@ -73,6 +76,14 @@ A pasta `UNET/` contém os scripts de **todos** os modelos v2 de 4 bandas (não 
 │   ├── 30_avaliar_ocupacao_TTA.py           avaliação com TTA
 │   ├── 31_ensemble_ocupacao_ndsm.py         ensembles com os modelos nDSM
 │   └── 99_cadeia_tta_ndsm.py                cadeia avaliação TTA → treino nDSM (já executada)
+├── RGB/                                     versão 2, 3 bandas (sem o NIR)
+│   ├── 23_exportar_chips_ocupacao.py        chips com o ortomosaico RGB
+│   ├── 24_verificar_chips_sem_rotulo.py
+│   ├── 25_treinar_ocupacao.py               treino DeepLabV3 e SAMLoRA
+│   ├── 30_avaliar_ocupacao.py               avaliação sem TTA
+│   ├── 30_avaliar_ocupacao_TTA.py           avaliação com TTA
+│   ├── 33_comparar_bandas.py                comparação RGB × 4 bandas × nDSM
+│   └── 99_cadeia_rgb.py                     cadeia chips → treino → avaliação → comparação
 └── Resultados/
     ├── 4Bandas/                             avaliação e ensemble, 4 bandas
     ├── 4Bandas_TTA/                         avaliação com TTA, 4 bandas
@@ -80,7 +91,7 @@ A pasta `UNET/` contém os scripts de **todos** os modelos v2 de 4 bandas (não 
     └── 5Bandas_nDSM_TTA/                    avaliação com TTA, 5 bandas
 ```
 
-A versão 2 com nDSM usa os scripts 21 e 22 de `UNET/` (os mesmos rótulos, a mesma máscara e as mesmas ortos de teste); só muda a imagem.
+As versões com nDSM e só com RGB usam os scripts 21 e 22 de `UNET/` (os mesmos rótulos, a mesma máscara e as mesmas ortos de teste); só muda a imagem.
 
 ## Cadeia de processamento
 

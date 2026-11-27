@@ -1,5 +1,5 @@
 {
-  "corrida": "20261127_094335",
+  "corrida": "20261127_111650",
   "modo_teste": false,
   "versoes": [
     "bruto",
@@ -36,9 +36,17 @@
       "pasta": "D:\\DL\\Modelos\\126_RViaria_nDSM\\mtre_rede_viaria_ndsm_resnet50_b8_lrauto_treino_20261126_1339",
       "mosaico": "D:\\Users\\Cap_Almeida\\Projeto\\126\\Ortomosaico\\126_ndsm\\126_nDSM_5bandas_v2.tif"
     },
+    "mtre_rede_viaria_rgb": {
+      "pasta": null,
+      "mosaico": "D:\\Users\\Cap_Almeida\\Projeto\\126\\Ortomosaico_RGB\\126.tif"
+    },
     "mtre_ferrovia_ndsm": {
       "pasta": "D:\\DL\\Modelos\\126_RViaria_nDSM\\mtre_ferrovia_ndsm_resnet50_b8_lrauto_treino_20261127_0634",
       "mosaico": "D:\\Users\\Cap_Almeida\\Projeto\\126\\Ortomosaico\\126_ndsm\\126_nDSM_5bandas_v2.tif"
+    },
+    "mtre_ferrovia_rgb": {
+      "pasta": null,
+      "mosaico": "D:\\Users\\Cap_Almeida\\Projeto\\126\\Ortomosaico_RGB\\126.tif"
     },
     "mtre_ferrovia": {
       "pasta": "D:\\DL\\Modelos\\126_RViaria\\mtre_ferrovia_resnet50_b8_lrauto_treino_20261017_0209",
